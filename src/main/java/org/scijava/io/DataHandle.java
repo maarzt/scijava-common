@@ -97,7 +97,12 @@ public interface DataHandle<L extends Location> extends WrapperPlugin<L>,
 	 */
 	ByteOrder getOrder();
 
-	/** Gets the endianness of the stream. */
+	/** Returns true iff the stream's order is {@link ByteOrder#BIG_ENDIAN}. */
+	default boolean isBigEndian() {
+		return getOrder() == ByteOrder.BIG_ENDIAN;
+	}
+
+	/** Returns true iff the stream's order is {@link ByteOrder#LITTLE_ENDIAN}. */
 	default boolean isLittleEndian() {
 		return getOrder() == ByteOrder.LITTLE_ENDIAN;
 	}
