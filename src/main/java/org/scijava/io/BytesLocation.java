@@ -40,7 +40,7 @@ import java.nio.ByteBuffer;
  */
 public class BytesLocation extends AbstractLocation {
 
-	private final ByteBuffer bytes;
+	private ByteBuffer bytes;
 
 	public BytesLocation(final ByteBuffer bytes) {
 		this.bytes = bytes;
@@ -59,6 +59,11 @@ public class BytesLocation extends AbstractLocation {
 	/** Gets the associated {@link ByteBuffer}. */
 	public ByteBuffer getByteBuffer() {
 		return bytes;
+	}
+
+	/** Sets the associated {@link ByteBuffer}. */
+	public void setByteBuffer(final ByteBuffer bytes) {
+		this.bytes = bytes;
 	}
 
 }
