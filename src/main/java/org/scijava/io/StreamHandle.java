@@ -29,7 +29,7 @@
  * #L%
  */
 
-package org.scijava.io.stream;
+package org.scijava.io;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -40,8 +40,6 @@ import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-import org.scijava.io.DataHandle;
-import org.scijava.io.Location;
 import org.scijava.util.Bytes;
 
 /**
@@ -53,32 +51,58 @@ import org.scijava.util.Bytes;
  */
 public interface StreamHandle<L extends Location> extends DataHandle<L> {
 
+	// -- Constants --
+
+	/** Maximum size of the input stream buffer. */
+	public static final int MAX_OVERHEAD = 1048576;
+
 	// -- StreamHandle methods --
 
-	DataInputStream in();
+	/**
+	 * Gets an input stream for reading data, positioned at the current offset.
+	 * 
+	 * @return the appropriate input stream, or null if the handle is write-only.
+	 */
+	InputStream in();
 
-	void setIn(DataInputStream in);
+	/**
+	 * Gets an output stream for writing data, positioned at the current offset.
+	 * 
+	 * @return the appropriate output stream, or null if the handle is read-only.
+	 */
+	OutputStream out();
 
-	DataOutputStream out();
-
-	void setOut(DataOutputStream out);
+	/**
+	 * Increments the handle's offset by the given amount.
+	 * <p>
+	 * This method is intended to be called only in conjunction with reading from
+	 * the input stream, or writing to the output stream. Otherwise, the contents
+	 * may get out of sync.
+	 * </p>
+	 */
+	void advance(final long bytes);
 
 	// -- DataHandle methods --
+
+	@Override
+	default void ensureReadable(final long count) throws IOException {
+		if (in() == null) throw new IOException("This handle is write-only.");
+		DataHandle.super.ensureReadable(count);
+	}
+
+	@Override
+	default boolean ensureWritable(final long count) throws IOException {
+		if (out() == null) throw new IOException("This handle is read-only.");
+		return DataHandle.super.ensureWritable(count);
+	}
 
 	@Override
 	default int read(final byte[] b, final int off, final int len)
 		throws IOException
 	{
-		int n = in().read(b, off, len);
-		if (n >= 0) offset += n;
-		else n = 0;
-		markManager();
-		while (n < len && offset < length()) {
-			final int s = in().read(b, off + n, len - n);
-			offset += s;
-			n += s;
-		}
-		return n == -1 ? 0 : n;
+		final int n = in().read(b, off, len);
+		if (n >= 0) advance(n);
+		return n;
 	}
 
 	@Override
@@ -327,10 +351,61 @@ public interface StreamHandle<L extends Location> extends DataHandle<L> {
 
 	/** Reset the marked position, if necessary. */
 	private void markManager() {
-		if (offset >= mark + RandomAccessInputStream.MAX_OVERHEAD - 1) {
+		if (offset >= mark + MAX_OVERHEAD - 1) {
 			mark = offset;
-			in().mark(RandomAccessInputStream.MAX_OVERHEAD);
+			in().mark(MAX_OVERHEAD);
 		}
 	}
-	
+
+	//////////////// NEEDED TO IMPLEMENT
+
+	// -- DataInput methods --
+
+	@Override
+	public int read(final byte[] b, final int off, final int len)
+		throws IOException
+	{
+		final int r = in().read(b, off, len);
+		if (r >= 0) advance(r);
+		return r;
+	}
+
+	@Override
+	public byte readByte() throws IOException {
+		final int r = in().read();
+		if (r < 0) throw new EOFException();
+		advance(1);
+		return r;
+	}
+
+	// -- DataOutput methods --
+
+	@Override
+	public void write(final byte[] b, final int off, final int len)
+		throws IOException
+	{
+		ensureWritable(len);
+		offset += len;
+	}
+
+	@Override
+	public void writeByte(final int v) throws IOException {
+		// NB: Do nothing.
+		ensureWritable(1);
+		offset++;
+	}
+
+	// -- Closeable methods --
+
+	@Override
+	default void close() throws IOException {
+		// TODO: Double check this logic.
+		try (final InputStream in = in()) {
+			if (in != null) in.close();
+		}
+		try (final OutputStream out = out()) {
+			if (out != null) out.close();
+		}
+	}
+
 }

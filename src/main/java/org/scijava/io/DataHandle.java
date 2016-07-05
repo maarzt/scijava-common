@@ -71,7 +71,7 @@ public interface DataHandle<L extends Location> extends WrapperPlugin<L>,
 	 */
 	void seek(long pos) throws IOException;
 
-	/** Returns the length of the stream. */
+	/** Returns the length of the data in bytes. */
 	long length() throws IOException;
 
 	/**
@@ -226,7 +226,6 @@ public interface DataHandle<L extends Location> extends WrapperPlugin<L>,
 			write(b);
 		}
 	}
-
 
 	/** Reads a string of arbitrary length, terminated by a null char. */
 	default String readCString() throws IOException {
@@ -401,16 +400,14 @@ public interface DataHandle<L extends Location> extends WrapperPlugin<L>,
 	 * @return the next byte of data, or -1 if the end of the stream is reached.
 	 * @throws IOException - if an I/O error occurs.
 	 */
-	default int read() throws IOException {
-		return offset() < length() ? readByte() & 0xff : -1;
-	}
+	int read() throws IOException;
 
 	/**
 	 * Reads up to b.length bytes of data from the stream into an array of bytes.
 	 * 
 	 * @return the total number of bytes read into the buffer.
 	 */
-	default int read(byte[] b) throws IOException {
+	default int read(final byte[] b) throws IOException {
 		return read(b, 0, b.length);
 	}
 
@@ -434,10 +431,10 @@ public interface DataHandle<L extends Location> extends WrapperPlugin<L>,
 	 * @throws IOException - if an I/O error occurs.
 	 */
 	default long skip(final long n) throws IOException {
-		final long skipped = available(n);
-		if (skipped < 0) return 0;
-		seek(offset() + skipped);
-		return skipped;
+		final long skip = available(n);
+		if (skip <= 0) return 0;
+		seek(offset() + skip);
+		return skip;
 	}
 
 	// -- DataInput methods --
@@ -448,16 +445,37 @@ public interface DataHandle<L extends Location> extends WrapperPlugin<L>,
 	}
 
 	@Override
+	default void readFully(final byte[] b, final int off, final int len)
+		throws IOException
+	{
+		// NB: Adapted from java.io.DataInputStream.readFully(byte[], int, int).
+		if (len < 0) throw new IndexOutOfBoundsException();
+		int n = 0;
+		while (n < len) {
+			int count = read(b, off + n, len - n);
+			if (count < 0) throw new EOFException();
+			n += count;
+		}
+	}
+
+	@Override
 	default int skipBytes(final int n) throws IOException {
-		final int skipped = (int) available(n);
-		if (skipped < 0) return 0;
-		seek(offset() + skipped);
-		return skipped;
+		final int skip = (int) available(n);
+		if (skip <= 0) return 0;
+		seek(offset() + skip);
+		return skip;
 	}
 
 	@Override
 	default boolean readBoolean() throws IOException {
 		return readByte() != 0;
+	}
+
+	@Override
+	default byte readByte() throws IOException {
+		final int ch = read();
+		if (ch < 0) throw new EOFException();
+		return (byte) ch;
 	}
 
 	@Override
@@ -470,7 +488,7 @@ public interface DataHandle<L extends Location> extends WrapperPlugin<L>,
 		final int ch1 = read();
 		final int ch2 = read();
 		if ((ch1 | ch2) < 0) throw new EOFException();
-		return (short)((ch1 << 8) + (ch2 << 0));
+		return (short) ((ch1 << 8) + (ch2 << 0));
 	}
 
 	@Override
@@ -566,11 +584,6 @@ public interface DataHandle<L extends Location> extends WrapperPlugin<L>,
 	// -- DataOutput methods --
 
 	@Override
-	default void write(final int b) throws IOException {
-		writeByte(b);
-	}
-
-	@Override
 	default void write(final byte[] b) throws IOException {
 		write(b, 0, b.length);
 	}
@@ -578,6 +591,11 @@ public interface DataHandle<L extends Location> extends WrapperPlugin<L>,
 	@Override
 	default void writeBoolean(final boolean v) throws IOException {
 		write(v ? 1 : 0);
+	}
+
+	@Override
+	default void writeByte(final int v) throws IOException {
+		write(v);
 	}
 
 	@Override
@@ -634,9 +652,9 @@ public interface DataHandle<L extends Location> extends WrapperPlugin<L>,
 
 	@Override
 	default void writeChars(final String s) throws IOException {
-		int len = s.length();
+		final int len = s.length();
 		for (int i = 0 ; i < len ; i++) {
-			int v = s.charAt(i);
+			final int v = s.charAt(i);
 			write((v >>> 8) & 0xFF);
 			write((v >>> 0) & 0xFF);
 		}

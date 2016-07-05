@@ -118,7 +118,7 @@ public class URILocation extends AbstractLocation {
 		try {
 			return URLDecoder.decode(s.replace("+", "%2B"), "UTF-8");
 		}
-		catch (UnsupportedEncodingException exc) {
+		catch (final UnsupportedEncodingException exc) {
 			return null;
 		}
 	}

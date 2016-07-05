@@ -56,6 +56,12 @@ public class BytesHandle extends AbstractDataHandle<BytesLocation> {
 	}
 
 	@Override
+	public void seek(final long pos) throws IOException {
+		if (pos > length()) setLength(pos);
+		bytes().position((int) pos);
+	}
+
+	@Override
 	public long length() {
 		return bytes().limit();
 	}
@@ -102,19 +108,39 @@ public class BytesHandle extends AbstractDataHandle<BytesLocation> {
 	}
 
 	@Override
-	public int read(final byte[] b, final int off, int len) throws IOException {
-		final int available = (int) available(len);
-		bytes().get(b, off, available);
-		return available;
+	public int read() throws IOException {
+		final int r = (int) available(1);
+		if (r <= 0) return -1;
+		try {
+			return bytes().get();
+		}
+		catch (final BufferUnderflowException e) {
+			return -1;
+		}
 	}
 
 	@Override
-	public void seek(final long pos) throws IOException {
-		if (pos > length()) setLength(pos);
-		bytes().position((int) pos);
+	public int read(final byte[] b, final int off, int len) throws IOException {
+		final int r = (int) available(len);
+		if (r <= 0) return -1;
+		bytes().get(b, off, r);
+		return r;
 	}
 
 	// -- DataInput methods --
+
+	@Override
+	public void readFully(final byte[] b, final int off, final int len)
+		throws IOException
+	{
+		ensureReadable(len);
+		try {
+			bytes().get(b, off, len);
+		}
+		catch (final BufferUnderflowException e) {
+			throw eofException(e);
+		}
+	}
 
 	@Override
 	public byte readByte() throws IOException {
@@ -128,45 +154,21 @@ public class BytesHandle extends AbstractDataHandle<BytesLocation> {
 	}
 
 	@Override
+	public short readShort() throws IOException {
+		ensureReadable(2);
+		try {
+			return bytes().getShort();
+		}
+		catch (final BufferUnderflowException e) {
+			throw eofException(e);
+		}
+	}
+
+	@Override
 	public char readChar() throws IOException {
 		ensureReadable(2);
 		try {
 			return bytes().getChar();
-		}
-		catch (final BufferUnderflowException e) {
-			throw eofException(e);
-		}
-	}
-
-	@Override
-	public double readDouble() throws IOException {
-		ensureReadable(8);
-		try {
-			return bytes().getDouble();
-		}
-		catch (final BufferUnderflowException e) {
-			throw eofException(e);
-		}
-	}
-
-	@Override
-	public float readFloat() throws IOException {
-		ensureReadable(4);
-		try {
-			return bytes().getFloat();
-		}
-		catch (final BufferUnderflowException e) {
-			throw eofException(e);
-		}
-	}
-
-	@Override
-	public void readFully(final byte[] b, final int off, final int len)
-		throws IOException
-	{
-		ensureReadable(len);
-		try {
-			bytes().get(b, off, len);
 		}
 		catch (final BufferUnderflowException e) {
 			throw eofException(e);
@@ -196,10 +198,21 @@ public class BytesHandle extends AbstractDataHandle<BytesLocation> {
 	}
 
 	@Override
-	public short readShort() throws IOException {
-		ensureReadable(2);
+	public float readFloat() throws IOException {
+		ensureReadable(4);
 		try {
-			return bytes().getShort();
+			return bytes().getFloat();
+		}
+		catch (final BufferUnderflowException e) {
+			throw eofException(e);
+		}
+	}
+
+	@Override
+	public double readDouble() throws IOException {
+		ensureReadable(8);
+		try {
+			return bytes().getDouble();
 		}
 		catch (final BufferUnderflowException e) {
 			throw eofException(e);
@@ -207,6 +220,12 @@ public class BytesHandle extends AbstractDataHandle<BytesLocation> {
 	}
 
 	// -- DataOutput methods --
+
+	@Override
+	public void write(final int v) throws IOException {
+		ensureWritable(1);
+		bytes().put((byte) v);
+	}
 
 	@Override
 	public void write(final byte[] b, final int off, final int len)
@@ -217,37 +236,15 @@ public class BytesHandle extends AbstractDataHandle<BytesLocation> {
 	}
 
 	@Override
-	public void writeByte(final int b) throws IOException {
-		ensureWritable(1);
-		bytes().put((byte) b);
+	public void writeShort(final int v) throws IOException {
+		ensureWritable(2);
+		bytes().putShort((short) v);
 	}
 
 	@Override
 	public void writeChar(final int v) throws IOException {
 		ensureWritable(2);
 		bytes().putChar((char) v);
-	}
-
-	@Override
-	public void writeChars(final String s) throws IOException {
-		final int len = 2 * s.length();
-		ensureWritable(len);
-		final char[] c = s.toCharArray();
-		for (int i = 0; i < c.length; i++) {
-			writeChar(c[i]);
-		}
-	}
-
-	@Override
-	public void writeDouble(final double v) throws IOException {
-		ensureWritable(8);
-		bytes().putDouble(v);
-	}
-
-	@Override
-	public void writeFloat(final float v) throws IOException {
-		ensureWritable(4);
-		bytes().putFloat(v);
 	}
 
 	@Override
@@ -263,9 +260,25 @@ public class BytesHandle extends AbstractDataHandle<BytesLocation> {
 	}
 
 	@Override
-	public void writeShort(final int v) throws IOException {
-		ensureWritable(2);
-		bytes().putShort((short) v);
+	public void writeFloat(final float v) throws IOException {
+		ensureWritable(4);
+		bytes().putFloat(v);
+	}
+
+	@Override
+	public void writeDouble(final double v) throws IOException {
+		ensureWritable(8);
+		bytes().putDouble(v);
+	}
+
+	@Override
+	public void writeChars(final String s) throws IOException {
+		final int len = 2 * s.length();
+		ensureWritable(len);
+		final char[] c = s.toCharArray();
+		for (int i = 0; i < c.length; i++) {
+			writeChar(c[i]);
+		}
 	}
 
 	// -- Closeable methods --

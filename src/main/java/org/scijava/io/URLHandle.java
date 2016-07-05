@@ -29,7 +29,7 @@
  * #L%
  */
 
-package org.scijava.io.stream;
+package org.scijava.io;
 
 import java.io.BufferedInputStream;
 import java.io.DataInputStream;
@@ -38,8 +38,7 @@ import java.net.URL;
 import java.net.URLConnection;
 
 import org.scijava.Context;
-import org.scijava.io.DataHandle;
-import org.scijava.io.URLLocation;
+import org.scijava.io.stream.AbstractStreamHandle;
 import org.scijava.plugin.Plugin;
 
 /**
