@@ -8,13 +8,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- *
+ * 
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- *
+ * 
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -31,103 +31,36 @@
 
 package org.scijava.io;
 
-import java.io.IOException;
-import java.util.Arrays;
-
-import org.scijava.plugin.Plugin;
-
 /**
- * A {@link DataHandle} which reads all zeroes, and writes no actual data.
- *
+ * Abstract base class for {@link StreamHandle} implementations.
+ * 
  * @author Curtis Rueden
+ * @author Melissa Linkert
  */
-@Plugin(type = DataHandle.class)
-public class DummyHandle extends AbstractDataHandle<DummyLocation> {
+public abstract class AbstractStreamHandle<L extends Location> extends
+	AbstractDataHandle<L> implements StreamHandle<L>
+{
 
 	// -- Fields --
 
+	/** Current position within the stream(s). */
 	private long offset;
-	private long length;
+
+	/** Marked position within the stream. */
+	private long mark;
+
+	// -- StreamHandle methods --
+
+	@Override
+	public void advance(final long bytes) {
+		offset += bytes;
+	}
 
 	// -- DataHandle methods --
 
 	@Override
-	public long offset() throws IOException {
+	public long offset() {
 		return offset;
-	}
-
-	@Override
-	public void seek(final long pos) throws IOException {
-		if (pos > length()) setLength(pos);
-		offset = pos;
-	}
-
-	@Override
-	public long length() throws IOException {
-		return length;
-	}
-
-	@Override
-	public void setLength(final long length) throws IOException {
-		this.length = length;
-	}
-
-	@Override
-	public boolean isReadable() {
-		return true;
-	}
-
-	@Override
-	public boolean isWritable() {
-		return true;
-	}
-
-	@Override
-	public int read() throws IOException {
-		final long r = available(1);
-		if (r <= 0) return -1;
-		offset++;
-		return 0;
-	}
-
-	@Override
-	public int read(final byte[] b, final int off, final int len)
-		throws IOException
-	{
-		final int r = (int) available(len);
-		offset += r;
-		Arrays.fill(b, off, off + r, (byte) 0);
-		return r;
-	}
-
-	// -- DataOutput methods --
-
-	@Override
-	public void write(final int v) throws IOException {
-		ensureWritable(1);
-		offset++;
-	}
-
-	@Override
-	public void write(final byte[] b, final int off, final int len)
-		throws IOException
-	{
-		ensureWritable(len);
-		offset += len;
-	}
-
-	// -- Closeable methods --
-
-	@Override
-	public void close() {
-		// NB: No action needed.
-	}
-
-	// -- Typed methods --
-
-	@Override
-	public Class<DummyLocation> getType() {
-		return DummyLocation.class;
 	}
 
 }

@@ -83,18 +83,43 @@ public interface DataHandle<L extends Location> extends WrapperPlugin<L>,
 	void setLength(long length) throws IOException;
 
 	/**
-	 * Verifies that the handle has sufficient bytes available to read, returning
-	 * the actual number of bytes which will be possible to read, which might
-	 * be less than the requested value.
+	 * Gets the number of bytes which can be safely read from, or written to, the
+	 * data handle, bounded by the specified number of bytes.
+	 * <p>
+	 * In the case of reading, attempting to read the returned number of bytes is
+	 * guaranteed not to throw {@link EOFException}. However, be aware that the
+	 * following methods <em>might still process fewer bytes</em> than indicated
+	 * by this method:
+	 * </p>
+	 * <ul>
+	 * <li>{@link #read(ByteBuffer)}</li>
+	 * <li>{@link #read(ByteBuffer, int)}</li>
+	 * <li>{@link #read(byte[])}</li>
+	 * <li>{@link #read(byte[], int, int)}</li>
+	 * <li>{@link #skip(long)}</li>
+	 * <li>{@link #skipBytes(int)}</li>
+	 * </ul>
+	 * <p>
+	 * In the case of writing, attempting to write the returned number of bytes is
+	 * guaranteed not to expand the length of the handle; i.e., the write will
+	 * only overwrite bytes already within the handle's bounds.
+	 * </p>
 	 * 
-	 * @param count Number of bytes to read.
-	 * @return The actual number of bytes available to be read.
+	 * @param count Desired number of bytes to read/write.
+	 * @return The actual number of bytes which could be safely read/written,
+	 *         which might be less than the requested value.
 	 * @throws IOException If something goes wrong with the check.
 	 */
 	default long available(final long count) throws IOException {
 		final long remain = length() - offset();
 		return remain < count ? remain : count;
 	}
+
+	/** Gets whether reading from this handle is supported. */
+	boolean isReadable();
+
+	/** Gets whether writing to this handle is supported. */
+	boolean isWritable();
 
 	/**
 	 * Ensures that the handle has sufficient bytes available to read.
@@ -105,20 +130,23 @@ public interface DataHandle<L extends Location> extends WrapperPlugin<L>,
 	 * @throws IOException If something goes wrong with the check.
 	 */
 	default void ensureReadable(final long count) throws IOException {
+		if (!isReadable()) throw new IOException("This handle is write-only.");
 		if (available(count) < count) throw new EOFException();
 	}
 
 	/**
-	 * Ensures that the handle has the correct length to be written to and extends
-	 * it as required.
+	 * Ensures that the handle has the correct length to be written to, and
+	 * extends it as required.
 	 * 
 	 * @param count Number of bytes to write.
 	 * @return {@code true} if the handle's length was sufficient, or
 	 *         {@code false} if the handle's length required an extension.
-	 * @throws IOException If something goes wrong with the check, or there is an
-	 *           error changing the handle's length.
+	 * @throws IOException If the handle is read-only, or something goes wrong
+	 *           with the check, or there is an error changing the handle's
+	 *           length.
 	 */
 	default boolean ensureWritable(final long count) throws IOException {
+		if (!isWritable()) throw new IOException("This handle is read-only.");
 		final long minLength = offset() + count;
 		if (length() < minLength) {
 			setLength(minLength);
@@ -202,7 +230,7 @@ public interface DataHandle<L extends Location> extends WrapperPlugin<L>,
 	}
 
 	/**
-	 * Writes up to {@code buf.remaining()} bytes of data from the given
+	 * Writes {@code buf.remaining()} bytes of data from the given
 	 * {@link ByteBuffer} to the stream.
 	 */
 	default void write(final ByteBuffer buf) throws IOException {
@@ -210,7 +238,8 @@ public interface DataHandle<L extends Location> extends WrapperPlugin<L>,
 	}
 
 	/**
-	 * Writes up to len bytes of data from the given ByteBuffer to the stream.
+	 * Writes {@code len} bytes of data from the given {@link ByteBuffer} to the
+	 * stream.
 	 */
 	default void write(final ByteBuffer buf, final int len)
 		throws IOException
@@ -234,10 +263,9 @@ public interface DataHandle<L extends Location> extends WrapperPlugin<L>,
 	}
 
 	/** Reads a string of up to length n. */
-	default String readString(int n) throws IOException {
-		final long avail = length() - offset();
-		if (n > avail) n = (int) avail;
-		final byte[] b = new byte[n];
+	default String readString(final int n) throws IOException {
+		final int r = (int) available(n);
+		final byte[] b = new byte[r];
 		readFully(b);
 		return new String(b, getEncoding());
 	}

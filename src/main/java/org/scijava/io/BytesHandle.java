@@ -108,6 +108,18 @@ public class BytesHandle extends AbstractDataHandle<BytesLocation> {
 	}
 
 	@Override
+	public boolean isReadable() {
+		return true;
+	}
+
+	@Override
+	public boolean isWritable() {
+		// NB: Actually, some ByteBuffers are read-only.
+		// But sadly there is no API for determining this.
+		return true;
+	}
+
+	@Override
 	public int read() throws IOException {
 		final int r = (int) available(1);
 		if (r <= 0) return -1;

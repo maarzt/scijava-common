@@ -42,6 +42,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import org.scijava.Context;
+import org.scijava.io.AbstractStreamHandle;
 import org.scijava.io.DataHandle;
 import org.scijava.plugin.Plugin;
 

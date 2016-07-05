@@ -38,97 +38,24 @@ import java.net.URL;
 import java.net.URLConnection;
 
 import org.scijava.Context;
-import org.scijava.io.stream.AbstractStreamHandle;
 import org.scijava.plugin.Plugin;
 
 /**
- * Provides random access to URLs using the IRandomAccess interface. Instances
- * of URLHandle are read-only.
+ * {@link DataHandle} for a {@link URLLocation}.
  * 
- * @see DataHandle
- * @see AbstractStreamHandle
- * @see java.net.URLConnection
+ * @author Curtis Rueden
  * @author Melissa Linkert
+ * @see java.net.URLConnection
  */
 @Plugin(type = DataHandle.class)
 public class URLHandle extends AbstractStreamHandle<URLLocation> {
 
 	// -- Fields --
 
-	/** URL of open socket */
-	private String url;
-
-	/** Socket underlying this stream */
+	/** Socket underlying this stream. */
 	private URLConnection conn;
 
-	// -- Constructors --
-
-	/**
-	 * Zero-parameter constructor. This instructor can be used first to see if a
-	 * given file is constructable from this handle. If so, setFile can then be
-	 * used.
-	 */
-	public URLHandle() {
-		super();
-	}
-
-	public URLHandle(final Context context) {
-		super(context);
-	}
-
-	/**
-	 * Constructs a new URLHandle using the given URL.
-	 */
-	public URLHandle(final Context context, final String url) throws IOException {
-		super(context);
-		setURL(url);
-	}
-
-	// -- URLHandle API --
-
-	/**
-	 * Initializes this URLHandle with the provided url.
-	 * 
-	 * @throws IOException
-	 */
-	public void setURL(String url) throws IOException {
-		if (!isConstructable(url)) {
-			throw new HandleException(url + " is not a valid url.");
-		}
-
-		if (!url.startsWith("http") && !url.startsWith("file:")) {
-			url = "http://" + url;
-		}
-		this.url = url;
-		resetStream();
-	}
-
-	// -- IRandomAccess API methods --
-
-	@Override
-	public void seek(final long pos) throws IOException {
-		if (pos < getFp() && pos >= getMark()) {
-			getStream().reset();
-			setFp(getMark());
-			skip(pos - getFp());
-		}
-		else super.seek(pos);
-	}
-
-	// -- IStreamAccess API methods --
-
-	@Override
-	public boolean isConstructable(final String id) throws IOException {
-		return id.startsWith("http:") || id.startsWith("file:");
-	}
-
-	// -- StreamHandle API methods --
-
-	@Override
-	public void setFile(final String file) throws IOException {
-		super.setFile(file);
-		setURL(file);
-	}
+	// -- StreamHandle methods --
 
 	@Override
 	public void resetStream() throws IOException {
@@ -144,16 +71,16 @@ public class URLHandle extends AbstractStreamHandle<URLLocation> {
 
 	// -- Helper methods --
 
-	/** Skip over the given number of bytes. */
-	private void skip(long bytes) throws IOException {
-		while (bytes >= Integer.MAX_VALUE) {
-			bytes -= skipBytes(Integer.MAX_VALUE);
-		}
-		int skipped = skipBytes((int) bytes);
-		while (skipped < bytes) {
-			final int n = skipBytes((int) (bytes - skipped));
-			if (n == 0) break;
-			skipped += n;
-		}
+	private URLConnection conn() throws IOException {
+		if (conn == null) initConn();
+		return conn;
 	}
+
+	private synchronized void initConn() throws IOException {
+		if (conn != null) return;
+		conn = get().getURL().openConnection();
+		conn.setDoInput(isReadable());
+		conn.setDoOutput(isWritable());
+	}
+
 }

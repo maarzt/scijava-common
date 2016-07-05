@@ -39,6 +39,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 
 import org.scijava.Context;
+import org.scijava.io.AbstractStreamHandle;
 import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;

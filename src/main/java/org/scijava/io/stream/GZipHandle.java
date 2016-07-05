@@ -40,6 +40,7 @@ import java.io.IOException;
 import java.util.zip.GZIPInputStream;
 
 import org.scijava.Context;
+import org.scijava.io.AbstractStreamHandle;
 import org.scijava.plugin.Plugin;
 
 /**
