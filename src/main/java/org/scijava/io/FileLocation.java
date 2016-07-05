@@ -38,6 +38,7 @@ import java.net.URI;
  * {@link Location} backed by a {@link File} on disk.
  *
  * @author Curtis Rueden
+ * @see FileHandle
  */
 public class FileLocation extends AbstractLocation {
 
