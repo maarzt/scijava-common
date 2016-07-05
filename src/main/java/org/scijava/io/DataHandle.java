@@ -33,17 +33,20 @@ package org.scijava.io;
 
 import java.io.Closeable;
 import java.io.DataInput;
+import java.io.DataInputStream;
 import java.io.DataOutput;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.UTFDataFormatException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 import org.scijava.plugin.WrapperPlugin;
 
 /**
- * A <em>data handle</em> is a plugin which provides access to bytes in a data
- * stream (e.g., files or arrays), identified by a {@link Location}.
+ * A <em>data handle</em> is a plugin which provides both streaming and random
+ * access to bytes at a {@link Location} (e.g., files or arrays).
  * 
  * @author Curtis Rueden
  * @see DataHandleInputStream
@@ -62,6 +65,12 @@ public interface DataHandle<L extends Location> extends WrapperPlugin<L>,
 	/** Returns the current offset in the stream. */
 	long offset() throws IOException;
 
+	/**
+	 * Sets the stream offset, measured from the beginning of the stream, at which
+	 * the next read or write occurs.
+	 */
+	void seek(long pos) throws IOException;
+
 	/** Returns the length of the stream. */
 	long length() throws IOException;
 
@@ -74,38 +83,52 @@ public interface DataHandle<L extends Location> extends WrapperPlugin<L>,
 	void setLength(long length) throws IOException;
 
 	/**
+	 * Verifies that the handle has sufficient bytes available to read, returning
+	 * the actual number of bytes which will be possible to read, which might
+	 * be less than the requested value.
+	 * 
+	 * @param count Number of bytes to read.
+	 * @return The actual number of bytes available to be read.
+	 * @throws IOException If something goes wrong with the check.
+	 */
+	default long available(final long count) throws IOException {
+		final long remain = length() - offset();
+		return remain < count ? remain : count;
+	}
+
+	/**
+	 * Ensures that the handle has sufficient bytes available to read.
+	 * 
+	 * @param count Number of bytes to read.
+	 * @see #available(long)
+	 * @throws EOFException If there are insufficient bytes available.
+	 * @throws IOException If something goes wrong with the check.
+	 */
+	default void ensureReadable(final long count) throws IOException {
+		if (available(count) < count) throw new EOFException();
+	}
+
+	/**
 	 * Ensures that the handle has the correct length to be written to and extends
 	 * it as required.
 	 * 
-	 * @param writeLength Number of bytes to write.
+	 * @param count Number of bytes to write.
 	 * @return {@code true} if the handle's length was sufficient, or
 	 *         {@code false} if the handle's length required an extension.
-	 * @throws IOException If there is an error changing the handle's length.
+	 * @throws IOException If something goes wrong with the check, or there is an
+	 *           error changing the handle's length.
 	 */
-	default boolean validateLength(final int writeLength) throws IOException {
-		if (offset() + writeLength > length()) {
-			setLength(offset() + writeLength);
+	default boolean ensureWritable(final long count) throws IOException {
+		final long minLength = offset() + count;
+		if (length() < minLength) {
+			setLength(minLength);
 			return false;
 		}
 		return true;
 	}
 
-	/**
-	 * Returns the current order of the stream.
-	 * 
-	 * @return See above.
-	 */
+	/** Returns the current order of the stream. */
 	ByteOrder getOrder();
-
-	/** Returns true iff the stream's order is {@link ByteOrder#BIG_ENDIAN}. */
-	default boolean isBigEndian() {
-		return getOrder() == ByteOrder.BIG_ENDIAN;
-	}
-
-	/** Returns true iff the stream's order is {@link ByteOrder#LITTLE_ENDIAN}. */
-	default boolean isLittleEndian() {
-		return getOrder() == ByteOrder.LITTLE_ENDIAN;
-	}
 
 	/**
 	 * Sets the byte order of the stream.
@@ -114,8 +137,32 @@ public interface DataHandle<L extends Location> extends WrapperPlugin<L>,
 	 */
 	void setOrder(ByteOrder order);
 
-	/** Sets the endianness of the stream. */
-	default void setOrder(final boolean little) {
+	/**
+	 * Returns true iff the stream's order is {@link ByteOrder#BIG_ENDIAN}.
+	 * 
+	 * @see #getOrder()
+	 */
+	default boolean isBigEndian() {
+		return getOrder() == ByteOrder.BIG_ENDIAN;
+	}
+
+	/**
+	 * Returns true iff the stream's order is {@link ByteOrder#LITTLE_ENDIAN}.
+	 * 
+	 * @see #getOrder()
+	 */
+	default boolean isLittleEndian() {
+		return getOrder() == ByteOrder.LITTLE_ENDIAN;
+	}
+
+	/**
+	 * Sets the endianness of the stream.
+	 * 
+	 * @param little If true, sets the order to {@link ByteOrder#LITTLE_ENDIAN};
+	 *          otherwise, sets the order to {@link ByteOrder#BIG_ENDIAN}.
+	 * @see #setOrder(ByteOrder)
+	 */
+	default void setLittleEndian(final boolean little) {
 		setOrder(little ? ByteOrder.LITTLE_ENDIAN : ByteOrder.BIG_ENDIAN);
 	}
 
@@ -153,12 +200,6 @@ public interface DataHandle<L extends Location> extends WrapperPlugin<L>,
 		}
 		return n;
 	}
-
-	/**
-	 * Sets the stream offset, measured from the beginning of the stream, at which
-	 * the next read or write occurs.
-	 */
-	void seek(long pos) throws IOException;
 
 	/**
 	 * Writes up to {@code buf.remaining()} bytes of data from the given
@@ -393,23 +434,30 @@ public interface DataHandle<L extends Location> extends WrapperPlugin<L>,
 	 * @throws IOException - if an I/O error occurs.
 	 */
 	default long skip(final long n) throws IOException {
-		if (n < 0) return 0;
-		final long remain = length() - offset();
-		final long num = n < remain ? n : remain;
-		seek(offset() + num);
-		return num;
+		final long skipped = available(n);
+		if (skipped < 0) return 0;
+		seek(offset() + skipped);
+		return skipped;
 	}
 
 	// -- DataInput methods --
 
 	@Override
-	default boolean readBoolean() throws IOException {
-		return readByte() != 0;
+	default void readFully(final byte[] b) throws IOException {
+		readFully(b, 0, b.length);
 	}
 
 	@Override
-	default void readFully(final byte[] b) throws IOException {
-		readFully(b, 0, b.length);
+	default int skipBytes(final int n) throws IOException {
+		final int skipped = (int) available(n);
+		if (skipped < 0) return 0;
+		seek(offset() + skipped);
+		return skipped;
+	}
+
+	@Override
+	default boolean readBoolean() throws IOException {
+		return readByte() != 0;
 	}
 
 	@Override
@@ -418,13 +466,70 @@ public interface DataHandle<L extends Location> extends WrapperPlugin<L>,
 	}
 
 	@Override
+	default short readShort() throws IOException {
+		final int ch1 = read();
+		final int ch2 = read();
+		if ((ch1 | ch2) < 0) throw new EOFException();
+		return (short)((ch1 << 8) + (ch2 << 0));
+	}
+
+	@Override
 	default int readUnsignedShort() throws IOException {
 		return readShort() & 0xffff;
 	}
 
 	@Override
+	default char readChar() throws IOException {
+		return (char) readShort();
+	}
+
+	@Override
+	default int readInt() throws IOException {
+		int ch1 = read();
+		int ch2 = read();
+		int ch3 = read();
+		int ch4 = read();
+		if ((ch1 | ch2 | ch3 | ch4) < 0) throw new EOFException();
+		return ((ch1 << 24) + (ch2 << 16) + (ch3 << 8) + (ch4 << 0));
+	}
+
+	@Override
+	default long readLong() throws IOException {
+		int ch1 = read();
+		int ch2 = read();
+		int ch3 = read();
+		int ch4 = read();
+		int ch5 = read();
+		int ch6 = read();
+		int ch7 = read();
+		int ch8 = read();
+		if ((ch1 | ch2 | ch3 | ch4 | ch5 | ch6 | ch7 | ch8) < 0) {
+			throw new EOFException();
+		}
+		// TODO: Double check this inconsistent code.
+		return ((long) ch1 << 56) + //
+			((long) (ch2 & 255) << 48) + //
+			((long) (ch3 & 255) << 40) + //
+			((long) (ch4 & 255) << 32) + //
+			((long) (ch5 & 255) << 24) + //
+			((ch6 & 255) << 16) + //
+			((ch7 & 255) << 8) + //
+			((ch8 & 255) << 0);
+	}
+
+	@Override
+	default float readFloat() throws IOException {
+		return Float.intBitsToFloat(readInt());
+	}
+
+	@Override
+	default double readDouble() throws IOException {
+		return Double.longBitsToDouble(readLong());
+	}
+
+	@Override
 	default String readLine() throws IOException {
-		// NB: Code adapted from java.io.RandomAccessFile.readLine().
+		// NB: Adapted from java.io.RandomAccessFile.readLine().
 
 		final StringBuffer input = new StringBuffer();
 		int c = -1;
@@ -455,21 +560,15 @@ public interface DataHandle<L extends Location> extends WrapperPlugin<L>,
 
 	@Override
 	default String readUTF() throws IOException {
-		final int length = readUnsignedShort();
-		final byte[] b = new byte[length];
-		read(b);
-		return new String(b, "UTF-8");
-	}
-
-	@Override
-	default int skipBytes(final int n) throws IOException {
-		final int skipped = (int) Math.min(n, length() - offset());
-		if (skipped < 0) return 0;
-		seek(offset() + skipped);
-		return skipped;
+		return DataInputStream.readUTF(this);
 	}
 
 	// -- DataOutput methods --
+
+	@Override
+	default void write(final int b) throws IOException {
+		writeByte(b);
+	}
 
 	@Override
 	default void write(final byte[] b) throws IOException {
@@ -482,20 +581,124 @@ public interface DataHandle<L extends Location> extends WrapperPlugin<L>,
 	}
 
 	@Override
-	default void writeByte(final int v) throws IOException {
-		write(v);
+	default void writeShort(final int v) throws IOException {
+		write((v >>> 8) & 0xFF);
+		write((v >>> 0) & 0xFF);
 	}
 
 	@Override
+	default void writeChar(final int v) throws IOException {
+		write((v >>> 8) & 0xFF);
+		write((v >>> 0) & 0xFF);
+	}
+
+	@Override
+	default void writeInt(final int v) throws IOException {
+		write((v >>> 24) & 0xFF);
+		write((v >>> 16) & 0xFF);
+		write((v >>> 8) & 0xFF);
+		write((v >>> 0) & 0xFF);
+	}
+
+	@Override
+	default void writeLong(final long v) throws IOException {
+		write((byte) (v >>> 56));
+		write((byte) (v >>> 48));
+		write((byte) (v >>> 40));
+		write((byte) (v >>> 32));
+		write((byte) (v >>> 24));
+		write((byte) (v >>> 16));
+		write((byte) (v >>> 8));
+		write((byte) (v >>> 0));
+	}
+
+	@Override
+	default void writeFloat(final float v) throws IOException {
+		writeInt(Float.floatToIntBits(v));
+	}
+
+	@Override
+	default void writeDouble(final double v) throws IOException {
+		writeLong(Double.doubleToLongBits(v));
+	}
+
+	@Override
+	@SuppressWarnings("deprecation")
 	default void writeBytes(final String s) throws IOException {
-		write(s.getBytes("UTF-8"));
+		// NB: Adapted from java.io.RandomAccessFile.writeBytes(String).
+		final int len = s.length();
+		final byte[] b = new byte[len];
+		s.getBytes(0, len, b, 0);
+		write(b, 0, len);
+	}
+
+	@Override
+	default void writeChars(final String s) throws IOException {
+		int len = s.length();
+		for (int i = 0 ; i < len ; i++) {
+			int v = s.charAt(i);
+			write((v >>> 8) & 0xFF);
+			write((v >>> 0) & 0xFF);
+		}
 	}
 
 	@Override
 	default void writeUTF(final String str) throws IOException {
-		final byte[] b = str.getBytes("UTF-8");
-		writeShort(b.length);
-		write(b);
+		// NB: Adapted from DataOutputStream.writeUTF(String, DataOutput).
+		// (Unfortunately, that static method has package-private access.)
+
+		int strlen = str.length();
+		int utflen = 0;
+		int c, count = 0;
+
+		/* use charAt instead of copying String to char array */
+		for (int i = 0; i < strlen; i++) {
+			c = str.charAt(i);
+			if ((c >= 0x0001) && (c <= 0x007F)) {
+				utflen++;
+			}
+			else if (c > 0x07FF) {
+				utflen += 3;
+			}
+			else {
+				utflen += 2;
+			}
+		}
+
+		if (utflen > 65535) {
+			throw new UTFDataFormatException("encoded string too long: " + utflen +
+				" bytes");
+		}
+
+		byte[] bytearr = new byte[utflen + 2];
+
+		bytearr[count++] = (byte) ((utflen >>> 8) & 0xFF);
+		bytearr[count++] = (byte) ((utflen >>> 0) & 0xFF);
+
+		int i = 0;
+		for (i = 0; i < strlen; i++) {
+			c = str.charAt(i);
+			if (!((c >= 0x0001) && (c <= 0x007F))) break;
+			bytearr[count++] = (byte) c;
+		}
+
+		for (; i < strlen; i++) {
+			c = str.charAt(i);
+			if ((c >= 0x0001) && (c <= 0x007F)) {
+				bytearr[count++] = (byte) c;
+
+			}
+			else if (c > 0x07FF) {
+				bytearr[count++] = (byte) (0xE0 | ((c >> 12) & 0x0F));
+				bytearr[count++] = (byte) (0x80 | ((c >> 6) & 0x3F));
+				bytearr[count++] = (byte) (0x80 | ((c >> 0) & 0x3F));
+			}
+			else {
+				bytearr[count++] = (byte) (0xC0 | ((c >> 6) & 0x1F));
+				bytearr[count++] = (byte) (0x80 | ((c >> 0) & 0x3F));
+			}
+		}
+		write(bytearr, 0, utflen + 2);
 	}
 
 }

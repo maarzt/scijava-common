@@ -103,11 +103,9 @@ public class BytesHandle extends AbstractDataHandle<BytesLocation> {
 
 	@Override
 	public int read(final byte[] b, final int off, int len) throws IOException {
-		if (offset() + len > length()) {
-			len = (int) (length() - offset());
-		}
-		bytes().get(b, off, len);
-		return len;
+		final int available = (int) available(len);
+		bytes().get(b, off, available);
+		return available;
 	}
 
 	@Override
@@ -120,9 +118,7 @@ public class BytesHandle extends AbstractDataHandle<BytesLocation> {
 
 	@Override
 	public byte readByte() throws IOException {
-		if (offset() + 1 > length()) {
-			throw new EOFException();
-		}
+		ensureReadable(1);
 		try {
 			return bytes().get();
 		}
@@ -133,9 +129,7 @@ public class BytesHandle extends AbstractDataHandle<BytesLocation> {
 
 	@Override
 	public char readChar() throws IOException {
-		if (offset() + 2 > length()) {
-			throw new EOFException();
-		}
+		ensureReadable(2);
 		try {
 			return bytes().getChar();
 		}
@@ -146,9 +140,7 @@ public class BytesHandle extends AbstractDataHandle<BytesLocation> {
 
 	@Override
 	public double readDouble() throws IOException {
-		if (offset() + 8 > length()) {
-			throw new EOFException();
-		}
+		ensureReadable(8);
 		try {
 			return bytes().getDouble();
 		}
@@ -159,9 +151,7 @@ public class BytesHandle extends AbstractDataHandle<BytesLocation> {
 
 	@Override
 	public float readFloat() throws IOException {
-		if (offset() + 4 > length()) {
-			throw new EOFException();
-		}
+		ensureReadable(4);
 		try {
 			return bytes().getFloat();
 		}
@@ -174,9 +164,7 @@ public class BytesHandle extends AbstractDataHandle<BytesLocation> {
 	public void readFully(final byte[] b, final int off, final int len)
 		throws IOException
 	{
-		if (offset() + len > length()) {
-			throw new EOFException();
-		}
+		ensureReadable(len);
 		try {
 			bytes().get(b, off, len);
 		}
@@ -187,9 +175,7 @@ public class BytesHandle extends AbstractDataHandle<BytesLocation> {
 
 	@Override
 	public int readInt() throws IOException {
-		if (offset() + 4 > length()) {
-			throw new EOFException();
-		}
+		ensureReadable(4);
 		try {
 			return bytes().getInt();
 		}
@@ -200,9 +186,7 @@ public class BytesHandle extends AbstractDataHandle<BytesLocation> {
 
 	@Override
 	public long readLong() throws IOException {
-		if (offset() + 8 > length()) {
-			throw new EOFException();
-		}
+		ensureReadable(8);
 		try {
 			return bytes().getLong();
 		}
@@ -213,9 +197,7 @@ public class BytesHandle extends AbstractDataHandle<BytesLocation> {
 
 	@Override
 	public short readShort() throws IOException {
-		if (offset() + 2 > length()) {
-			throw new EOFException();
-		}
+		ensureReadable(2);
 		try {
 			return bytes().getShort();
 		}
@@ -230,26 +212,26 @@ public class BytesHandle extends AbstractDataHandle<BytesLocation> {
 	public void write(final byte[] b, final int off, final int len)
 		throws IOException
 	{
-		validateLength(len);
+		ensureWritable(len);
 		bytes().put(b, off, len);
 	}
 
 	@Override
-	public void write(final int b) throws IOException {
-		validateLength(1);
+	public void writeByte(final int b) throws IOException {
+		ensureWritable(1);
 		bytes().put((byte) b);
 	}
 
 	@Override
 	public void writeChar(final int v) throws IOException {
-		validateLength(2);
+		ensureWritable(2);
 		bytes().putChar((char) v);
 	}
 
 	@Override
 	public void writeChars(final String s) throws IOException {
 		final int len = 2 * s.length();
-		validateLength(len);
+		ensureWritable(len);
 		final char[] c = s.toCharArray();
 		for (int i = 0; i < c.length; i++) {
 			writeChar(c[i]);
@@ -258,31 +240,31 @@ public class BytesHandle extends AbstractDataHandle<BytesLocation> {
 
 	@Override
 	public void writeDouble(final double v) throws IOException {
-		validateLength(8);
+		ensureWritable(8);
 		bytes().putDouble(v);
 	}
 
 	@Override
 	public void writeFloat(final float v) throws IOException {
-		validateLength(4);
+		ensureWritable(4);
 		bytes().putFloat(v);
 	}
 
 	@Override
 	public void writeInt(final int v) throws IOException {
-		validateLength(4);
+		ensureWritable(4);
 		bytes().putInt(v);
 	}
 
 	@Override
 	public void writeLong(final long v) throws IOException {
-		validateLength(8);
+		ensureWritable(8);
 		bytes().putLong(v);
 	}
 
 	@Override
 	public void writeShort(final int v) throws IOException {
-		validateLength(2);
+		ensureWritable(2);
 		bytes().putShort((short) v);
 	}
 
