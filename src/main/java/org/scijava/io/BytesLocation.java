@@ -35,8 +35,14 @@ import java.nio.ByteBuffer;
 
 /**
  * {@link Location} backed by a {@link ByteBuffer}.
- *
+ * <p>
+ * Note that the backing {@link ByteBuffer} reference is mutable, and might
+ * change to a different, larger buffer if a sufficiently large amount of data
+ * is written to this location via a wrapping {@link BytesHandle}.
+ * </p>
+ * 
  * @author Curtis Rueden
+ * @see BytesHandle
  */
 public class BytesLocation extends AbstractLocation {
 
