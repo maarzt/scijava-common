@@ -48,6 +48,7 @@ import java.util.jar.JarOutputStream;
 import java.util.zip.ZipEntry;
 
 import org.junit.Test;
+import org.scijava.types.Types;
 
 /**
  * Tests {@link ClassUtils}.
@@ -124,17 +125,6 @@ public class ClassUtilsTest {
 	@Test(expected = IllegalArgumentException.class)
 	public void testFailureLoud() {
 		ClassUtils.loadClass("a.non.existent.class", false);
-	}
-
-	@Test
-	public void testGetArrayClass() {
-		assertSame(boolean[].class, ClassUtils.getArrayClass(boolean.class));
-		assertSame(String[].class, ClassUtils.getArrayClass(String.class));
-		assertSame(Number[].class, ClassUtils.getArrayClass(Number.class));
-		assertSame(boolean[][].class, ClassUtils.getArrayClass(boolean[].class));
-		assertSame(String[][].class, ClassUtils.getArrayClass(String[].class));
-		assertSame(Number[][].class, ClassUtils.getArrayClass(Number[].class));
-		assertNull(ClassUtils.getArrayClass(void.class));
 	}
 
 	@Test
