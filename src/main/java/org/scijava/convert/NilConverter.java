@@ -36,7 +36,7 @@ import java.lang.reflect.Type;
 import org.scijava.Priority;
 import org.scijava.plugin.Plugin;
 import org.scijava.types.Nil;
-import org.scijava.util.GenericUtils;
+import org.scijava.types.Types;
 
 /**
  * {@link Converter} implementation for handling {@link Nil} values.
@@ -67,7 +67,7 @@ public class NilConverter extends AbstractConverter<Nil<?>, Object> {
 		final Nil<?> nil = (Nil<?>) src;
 
 		// special case for conversion to Nil of another type
-		final Class<?> destClass = GenericUtils.getClass(dest);
+		final Class<?> destClass = Types.raw(dest);
 		if (destClass == Nil.class) {
 			// convert to target Nil type, preserving the source's callbacks
 			return Nil.of(((Nil<?>) dest).getType(), src);

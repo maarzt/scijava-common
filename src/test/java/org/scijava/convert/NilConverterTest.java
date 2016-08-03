@@ -43,7 +43,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.scijava.Context;
 import org.scijava.types.Nil;
-import org.scijava.util.GenericUtils;
+import org.scijava.types.Types;
 
 /**
  * Tests {@link NilConverter}.
@@ -113,7 +113,7 @@ public class NilConverterTest {
 		final Converter<?, ?> converter = convert.getHandler(nil, destType);
 		assertTrue(converter instanceof NilConverter);
 		final Object o = converter.convert(nil, destType);
-		assertTrue(GenericUtils.getClass(destType).isAssignableFrom(o.getClass()));
+		assertTrue(Types.raw(destType).isAssignableFrom(o.getClass()));
 	}
 
 }
