@@ -54,6 +54,7 @@ import org.junit.Test;
 import org.scijava.Context;
 import org.scijava.Priority;
 import org.scijava.plugin.Plugin;
+import org.scijava.types.Types;
 import org.scijava.util.BoolArray;
 import org.scijava.util.CharArray;
 import org.scijava.util.ClassUtils;
@@ -557,7 +558,7 @@ public class ConvertServiceTest {
 	private void setFieldValue(final Object o, final String fieldName,
 		final Object value)
 	{
-		ClassUtils.setValue(ClassUtils.getField(o.getClass(), fieldName), o, value);
+		ClassUtils.setValue(Types.field(o.getClass(), fieldName), o, value);
 	}
 
 	/**
