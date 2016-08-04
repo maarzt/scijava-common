@@ -187,19 +187,19 @@ public final class ClassUtils {
 		// handle source style arrays (e.g.: "java.lang.String[]")
 		if (name.endsWith("[]")) {
 			final String elementClassName = name.substring(0, name.length() - 2);
-			return getArrayClass(loadClass(elementClassName, classLoader));
+			return array(loadClass(elementClassName, classLoader));
 		}
 
 		// handle non-primitive internal arrays (e.g.: "[Ljava.lang.String;")
 		if (name.startsWith("[L") && name.endsWith(";")) {
 			final String elementClassName = name.substring(2, name.length() - 1);
-			return getArrayClass(loadClass(elementClassName, classLoader));
+			return array(loadClass(elementClassName, classLoader));
 		}
 
 		// handle other internal arrays (e.g.: "[I", "[[I", "[[Ljava.lang.String;")
 		if (name.startsWith("[")) {
 			final String elementClassName = name.substring(1);
-			return getArrayClass(loadClass(elementClassName, classLoader));
+			return array(loadClass(elementClassName, classLoader));
 		}
 
 		// load the class!
