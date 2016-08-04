@@ -54,7 +54,7 @@ import org.scijava.menu.event.MenusUpdatedEvent;
 import org.scijava.module.ModuleInfo;
 import org.scijava.module.ModuleService;
 import org.scijava.plugin.Parameter;
-import org.scijava.util.ClassUtils;
+import org.scijava.types.Types;
 import org.scijava.util.MiscUtils;
 
 /**
@@ -232,7 +232,7 @@ public class ShadowMenu extends AbstractContextual implements
 		}
 		final String className = moduleInfo.getDelegateClassName();
 		try {
-			final Class<?> c = ClassUtils.loadClass(className, false);
+			final Class<?> c = Types.load(className, false);
 			final URL iconURL = c.getResource(iconPath);
 			if (iconURL == null) {
 				if (log != null) log.error("Could not load icon: " + iconPath);

@@ -49,6 +49,7 @@ import org.scijava.plugin.PluginIndex;
 import org.scijava.service.Service;
 import org.scijava.service.ServiceHelper;
 import org.scijava.service.ServiceIndex;
+import org.scijava.types.Types;
 import org.scijava.util.ClassUtils;
 import org.scijava.util.Query;
 
@@ -320,7 +321,7 @@ public class Context implements Disposable {
 	 *           service.
 	 */
 	public Service service(final String className) {
-		final Class<?> c = ClassUtils.loadClass(className, false);
+		final Class<?> c = Types.load(className, false);
 		if (!Service.class.isAssignableFrom(c)) {
 			throw new IllegalArgumentException("Not a service class: " + c.getName());
 		}
@@ -339,7 +340,7 @@ public class Context implements Disposable {
 
 	/** Gets the service of the given class name (useful for scripts). */
 	public Service getService(final String className) {
-		final Class<?> c = ClassUtils.loadClass(className);
+		final Class<?> c = Types.load(className);
 		if (c == null) return null;
 		if (!Service.class.isAssignableFrom(c)) return null; // not a service class
 		@SuppressWarnings("unchecked")

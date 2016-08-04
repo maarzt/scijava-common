@@ -66,7 +66,6 @@ import org.scijava.plugin.PluginService;
 import org.scijava.plugin.SciJavaPlugin;
 import org.scijava.service.Service;
 import org.scijava.types.Types;
-import org.scijava.util.ClassUtils;
 import org.scijava.util.ColorRGB;
 import org.scijava.util.ColorRGBA;
 
@@ -264,7 +263,7 @@ public class DefaultScriptService extends
 		}
 
 		try {
-			final Class<?> c = ClassUtils.loadClass(alias, false);
+			final Class<?> c = Types.load(alias, false);
 			aliasMap().put(alias, c);
 			return c;
 		}
