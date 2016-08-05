@@ -40,8 +40,6 @@ import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.util.Set;
 
-import org.scijava.util.ConversionUtils;
-
 /**
  * A "typed null" which knows its generic type, and can generate proxy objects
  * implementing that type's interfaces, with customizable behavior per interface
@@ -195,7 +193,7 @@ public abstract class Nil<T> implements GenericTyped, Proxyable<T>,
 		}
 		catch (final NoSuchMethodException exc) {
 			// NB: Default behavior is to do nothing and return null.
-			return ConversionUtils.getNullValue(method.getReturnType());
+			return Types.nullValue(method.getReturnType());
 		}
 	}
 
