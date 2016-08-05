@@ -56,6 +56,7 @@ import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.PluginInfo;
 import org.scijava.service.Service;
+import org.scijava.types.Types;
 import org.scijava.util.ClassUtils;
 import org.scijava.util.StringMaker;
 
@@ -510,8 +511,7 @@ public class CommandInfo extends PluginInfo<Command> implements ModuleInfo {
 	private boolean isImmutable(final Class<?> type) {
 		// NB: All eight primitive types, as well as the boxed primitive
 		// wrapper classes, as well as strings, are immutable objects.
-		return ClassUtils.isNumber(type) || ClassUtils.isText(type) ||
-			ClassUtils.isBoolean(type);
+		return Types.isNumber(type) || Types.isText(type) || Types.isBoolean(type);
 	}
 
 	private Class<?> loadCommandClass() {
