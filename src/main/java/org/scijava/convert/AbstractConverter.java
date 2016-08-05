@@ -38,7 +38,6 @@ import org.scijava.object.ObjectService;
 import org.scijava.plugin.AbstractHandlerPlugin;
 import org.scijava.plugin.Parameter;
 import org.scijava.types.Types;
-import org.scijava.util.ConversionUtils;
 
 /**
  * Abstract superclass for {@link Converter} plugins. Performs appropriate
@@ -110,8 +109,8 @@ public abstract class AbstractConverter<I, O> extends
 		if (src == null) return false;
 		final Class<?> saneSrc = Types.box(src);
 		final Class<?> saneDest = Types.box(dest);
-		return ConversionUtils.canCast(saneSrc, getInputType()) &&
-			ConversionUtils.canCast(getOutputType(), saneDest);
+		return Types.isAssignable(saneSrc, getInputType()) &&
+			Types.isAssignable(getOutputType(), saneDest);
 	}
 
 	@Override

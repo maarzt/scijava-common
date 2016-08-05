@@ -46,7 +46,6 @@ import org.scijava.event.EventService;
 import org.scijava.module.event.ModulesUpdatedEvent;
 import org.scijava.types.Types;
 import org.scijava.util.ClassUtils;
-import org.scijava.util.ConversionUtils;
 import org.scijava.util.VersionUtils;
 
 /**
@@ -273,7 +272,7 @@ public abstract class AbstractModuleInfo extends AbstractUIDetails implements
 		final Class<?> itemType = item.getType();
 		// if (!type.isAssignableFrom(itemType)) {
 		final Class<?> saneItemType = Types.box(itemType);
-		if (!ConversionUtils.canCast(type, saneItemType)) {
+		if (!Types.isAssignable(type, saneItemType)) {
 			throw new IllegalArgumentException("Type " + type.getName() +
 				" is incompatible with item of type " + itemType.getName());
 		}
