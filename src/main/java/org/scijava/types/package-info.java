@@ -54,10 +54,6 @@
  * which this package draws logic and inspiration:
  * </p>
  * <ol>
- * <li><a href="https://github.com/coekie/gentyref">GenTyRef</a>, the Generic
- * Type Reflector, by Wouter Coekaerts. While {@link org.scijava.types} uses no
- * code from GenTyRef directly, it was a substantial source of inspiration and
- * education.</li>
  * <li>The <a href="https://github.com/google/guava/wiki/ReflectionExplained">
  * <code>com.google.commons.reflect</code></a> package of
  * <a href="https://github.com/google/guava">Google Guava</a>. In particular,
@@ -72,6 +68,11 @@
  * 1) to avoid bringing in the whole of Apache Commons Lang as a dependency; and
  * 2) to fix an infinite recursion bug in the {@code TypeUtils.toString(Type)}
  * method.</li>
+ * <li><a href="https://github.com/coekie/gentyref">GenTyRef</a>, the Generic
+ * Type Reflector, by Wouter Coekaerts. The classes of this project is forked
+ * internally within SciJava's {@link org.scijava.types.Types} class; we did
+ * this to consolidate and unify it with the Apache Commons Lang TypeUtils
+ * code, since there was a lot of duplicated logic between the two.</li>
  * </ol>
  * <p>
  * All three of these libraries contain fantastic generics-related logic, but
