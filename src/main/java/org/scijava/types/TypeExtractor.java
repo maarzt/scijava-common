@@ -69,9 +69,9 @@ public interface TypeExtractor<T> extends SingletonPlugin {
 		final Type[] types = new Type[typeVars.length];
 		for (int i = 0; i < types.length; i++) {
 			types[i] = reify(o, i);
-			if (types[i] == null) types[i] = Types.newWildcardType();
+			if (types[i] == null) types[i] = Types.wildcard();
 		}
-		return Types.newParameterizedType(getRawType(), types);
+		return Types.parameterize(getRawType(), types);
 	}
 
 	/**
