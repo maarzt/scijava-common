@@ -349,6 +349,7 @@ public final class ClassUtils {
 
 	// -- Comparison --
 
+	// START HERE: Migrate remaining methods to Types, then deprecate this class.
 	/**
 	 * Compares two {@link Class} objects using their fully qualified names.
 	 * <p>
