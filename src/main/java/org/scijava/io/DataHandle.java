@@ -71,7 +71,7 @@ public interface DataHandle<L extends Location> extends WrapperPlugin<L>,
 	 */
 	void seek(long pos) throws IOException;
 
-	/** Returns the length of the stream. */
+	/** Returns the length of the data in bytes. */
 	long length() throws IOException;
 
 	/**
@@ -83,18 +83,43 @@ public interface DataHandle<L extends Location> extends WrapperPlugin<L>,
 	void setLength(long length) throws IOException;
 
 	/**
-	 * Verifies that the handle has sufficient bytes available to read, returning
-	 * the actual number of bytes which will be possible to read, which might be
-	 * less than the requested value.
+	 * Gets the number of bytes which can be safely read from, or written to, the
+	 * data handle, bounded by the specified number of bytes.
+	 * <p>
+	 * In the case of reading, attempting to read the returned number of bytes is
+	 * guaranteed not to throw {@link EOFException}. However, be aware that the
+	 * following methods <em>might still process fewer bytes</em> than indicated
+	 * by this method:
+	 * </p>
+	 * <ul>
+	 * <li>{@link #read(ByteBuffer)}</li>
+	 * <li>{@link #read(ByteBuffer, int)}</li>
+	 * <li>{@link #read(byte[])}</li>
+	 * <li>{@link #read(byte[], int, int)}</li>
+	 * <li>{@link #skip(long)}</li>
+	 * <li>{@link #skipBytes(int)}</li>
+	 * </ul>
+	 * <p>
+	 * In the case of writing, attempting to write the returned number of bytes is
+	 * guaranteed not to expand the length of the handle; i.e., the write will
+	 * only overwrite bytes already within the handle's bounds.
+	 * </p>
 	 * 
-	 * @param count Number of bytes to read.
-	 * @return The actual number of bytes available to be read.
+	 * @param count Desired number of bytes to read/write.
+	 * @return The actual number of bytes which could be safely read/written,
+	 *         which might be less than the requested value.
 	 * @throws IOException If something goes wrong with the check.
 	 */
 	default long available(final long count) throws IOException {
 		final long remain = length() - offset();
 		return remain < count ? remain : count;
 	}
+
+	/** Gets whether reading from this handle is supported. */
+	boolean isReadable();
+
+	/** Gets whether writing to this handle is supported. */
+	boolean isWritable();
 
 	/**
 	 * Ensures that the handle has sufficient bytes available to read.
@@ -105,20 +130,23 @@ public interface DataHandle<L extends Location> extends WrapperPlugin<L>,
 	 * @throws IOException If something goes wrong with the check.
 	 */
 	default void ensureReadable(final long count) throws IOException {
+		if (!isReadable()) throw new IOException("This handle is write-only.");
 		if (available(count) < count) throw new EOFException();
 	}
 
 	/**
-	 * Ensures that the handle has the correct length to be written to and extends
-	 * it as required.
+	 * Ensures that the handle has the correct length to be written to, and
+	 * extends it as required.
 	 * 
 	 * @param count Number of bytes to write.
 	 * @return {@code true} if the handle's length was sufficient, or
 	 *         {@code false} if the handle's length required an extension.
-	 * @throws IOException If something goes wrong with the check, or there is an
-	 *           error changing the handle's length.
+	 * @throws IOException If the handle is read-only, or something goes wrong
+	 *           with the check, or there is an error changing the handle's
+	 *           length.
 	 */
 	default boolean ensureWritable(final long count) throws IOException {
+		if (!isWritable()) throw new IOException("This handle is read-only.");
 		final long minLength = offset() + count;
 		if (length() < minLength) {
 			setLength(minLength);
@@ -202,7 +230,7 @@ public interface DataHandle<L extends Location> extends WrapperPlugin<L>,
 	}
 
 	/**
-	 * Writes up to {@code buf.remaining()} bytes of data from the given
+	 * Writes {@code buf.remaining()} bytes of data from the given
 	 * {@link ByteBuffer} to the stream.
 	 */
 	default void write(final ByteBuffer buf) throws IOException {
@@ -210,9 +238,12 @@ public interface DataHandle<L extends Location> extends WrapperPlugin<L>,
 	}
 
 	/**
-	 * Writes up to len bytes of data from the given ByteBuffer to the stream.
+	 * Writes {@code len} bytes of data from the given {@link ByteBuffer} to the
+	 * stream.
 	 */
-	default void write(final ByteBuffer buf, final int len) throws IOException {
+	default void write(final ByteBuffer buf, final int len)
+		throws IOException
+	{
 		if (buf.hasArray()) {
 			// write directly from the buffer's array
 			write(buf.array(), buf.arrayOffset(), len);
@@ -232,10 +263,9 @@ public interface DataHandle<L extends Location> extends WrapperPlugin<L>,
 	}
 
 	/** Reads a string of up to length n. */
-	default String readString(int n) throws IOException {
-		final long avail = length() - offset();
-		if (n > avail) n = (int) avail;
-		final byte[] b = new byte[n];
+	default String readString(final int n) throws IOException {
+		final int r = (int) available(n);
+		final byte[] b = new byte[r];
 		readFully(b);
 		return new String(b, getEncoding());
 	}
@@ -305,8 +335,8 @@ public interface DataHandle<L extends Location> extends WrapperPlugin<L>,
 	 * Reads or skips a string ending with one of the given terminating
 	 * substrings, using the specified block size for buffering.
 	 * 
-	 * @param saveString Whether to collect the string from the current offset to
-	 *          the terminating bytes, and return it. If false, returns null.
+	 * @param saveString Whether to collect the string from the current offset
+	 *          to the terminating bytes, and return it. If false, returns null.
 	 * @param blockSize The block size to use when reading bytes in chunks.
 	 * @param terminators The strings for which to search.
 	 * @throws IOException If saveString flag is set and the maximum search length
@@ -400,16 +430,14 @@ public interface DataHandle<L extends Location> extends WrapperPlugin<L>,
 	 * @return the next byte of data, or -1 if the end of the stream is reached.
 	 * @throws IOException - if an I/O error occurs.
 	 */
-	default int read() throws IOException {
-		return offset() < length() ? readByte() & 0xff : -1;
-	}
+	int read() throws IOException;
 
 	/**
 	 * Reads up to b.length bytes of data from the stream into an array of bytes.
 	 * 
 	 * @return the total number of bytes read into the buffer.
 	 */
-	default int read(byte[] b) throws IOException {
+	default int read(final byte[] b) throws IOException {
 		return read(b, 0, b.length);
 	}
 
@@ -433,10 +461,10 @@ public interface DataHandle<L extends Location> extends WrapperPlugin<L>,
 	 * @throws IOException - if an I/O error occurs.
 	 */
 	default long skip(final long n) throws IOException {
-		final long skipped = available(n);
-		if (skipped < 0) return 0;
-		seek(offset() + skipped);
-		return skipped;
+		final long skip = available(n);
+		if (skip <= 0) return 0;
+		seek(offset() + skip);
+		return skip;
 	}
 
 	// -- DataInput methods --
@@ -447,16 +475,37 @@ public interface DataHandle<L extends Location> extends WrapperPlugin<L>,
 	}
 
 	@Override
+	default void readFully(final byte[] b, final int off, final int len)
+		throws IOException
+	{
+		// NB: Adapted from java.io.DataInputStream.readFully(byte[], int, int).
+		if (len < 0) throw new IndexOutOfBoundsException();
+		int n = 0;
+		while (n < len) {
+			int count = read(b, off + n, len - n);
+			if (count < 0) throw new EOFException();
+			n += count;
+		}
+	}
+
+	@Override
 	default int skipBytes(final int n) throws IOException {
-		final int skipped = (int) available(n);
-		if (skipped < 0) return 0;
-		seek(offset() + skipped);
-		return skipped;
+		final int skip = (int) available(n);
+		if (skip <= 0) return 0;
+		seek(offset() + skip);
+		return skip;
 	}
 
 	@Override
 	default boolean readBoolean() throws IOException {
 		return readByte() != 0;
+	}
+
+	@Override
+	default byte readByte() throws IOException {
+		final int ch = read();
+		if (ch < 0) throw new EOFException();
+		return (byte) ch;
 	}
 
 	@Override
@@ -546,7 +595,7 @@ public interface DataHandle<L extends Location> extends WrapperPlugin<L>,
 					if (read() != '\n') seek(cur);
 					break;
 				default:
-					input.append((char) c);
+					input.append((char)c);
 					break;
 			}
 		}
@@ -565,11 +614,6 @@ public interface DataHandle<L extends Location> extends WrapperPlugin<L>,
 	// -- DataOutput methods --
 
 	@Override
-	default void write(final int b) throws IOException {
-		writeByte(b);
-	}
-
-	@Override
 	default void write(final byte[] b) throws IOException {
 		write(b, 0, b.length);
 	}
@@ -577,6 +621,11 @@ public interface DataHandle<L extends Location> extends WrapperPlugin<L>,
 	@Override
 	default void writeBoolean(final boolean v) throws IOException {
 		write(v ? 1 : 0);
+	}
+
+	@Override
+	default void writeByte(final int v) throws IOException {
+		write(v);
 	}
 
 	@Override
@@ -633,9 +682,9 @@ public interface DataHandle<L extends Location> extends WrapperPlugin<L>,
 
 	@Override
 	default void writeChars(final String s) throws IOException {
-		int len = s.length();
-		for (int i = 0; i < len; i++) {
-			int v = s.charAt(i);
+		final int len = s.length();
+		for (int i = 0 ; i < len ; i++) {
+			final int v = s.charAt(i);
 			write((v >>> 8) & 0xFF);
 			write((v >>> 0) & 0xFF);
 		}
@@ -648,8 +697,7 @@ public interface DataHandle<L extends Location> extends WrapperPlugin<L>,
 
 		int strlen = str.length();
 		int utflen = 0;
-		int c = 0;
-		int count = 0;
+		int c, count = 0;
 
 		/* use charAt instead of copying String to char array */
 		for (int i = 0; i < strlen; i++) {
