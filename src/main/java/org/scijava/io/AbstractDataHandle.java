@@ -71,4 +71,11 @@ public abstract class AbstractDataHandle<L extends Location> extends
 		this.encoding = encoding;
 	}
 
+	@Override
+	public boolean supports(L data) {
+		// We can not rely on the default implementation as all DataHandlePlugins
+		// are Typed on DataHandle, we need to fall back on runtime type checking
+		return getType().isAssignableFrom(data.getClass());
+	}
+
 }
