@@ -84,8 +84,8 @@ public interface DataHandle<L extends Location> extends WrapperPlugin<L>,
 
 	/**
 	 * Verifies that the handle has sufficient bytes available to read, returning
-	 * the actual number of bytes which will be possible to read, which might
-	 * be less than the requested value.
+	 * the actual number of bytes which will be possible to read, which might be
+	 * less than the requested value.
 	 * 
 	 * @param count Number of bytes to read.
 	 * @return The actual number of bytes available to be read.
@@ -212,9 +212,7 @@ public interface DataHandle<L extends Location> extends WrapperPlugin<L>,
 	/**
 	 * Writes up to len bytes of data from the given ByteBuffer to the stream.
 	 */
-	default void write(final ByteBuffer buf, final int len)
-		throws IOException
-	{
+	default void write(final ByteBuffer buf, final int len) throws IOException {
 		if (buf.hasArray()) {
 			// write directly from the buffer's array
 			write(buf.array(), buf.arrayOffset(), len);
@@ -226,7 +224,6 @@ public interface DataHandle<L extends Location> extends WrapperPlugin<L>,
 			write(b);
 		}
 	}
-
 
 	/** Reads a string of arbitrary length, terminated by a null char. */
 	default String readCString() throws IOException {
@@ -308,8 +305,8 @@ public interface DataHandle<L extends Location> extends WrapperPlugin<L>,
 	 * Reads or skips a string ending with one of the given terminating
 	 * substrings, using the specified block size for buffering.
 	 * 
-	 * @param saveString Whether to collect the string from the current offset
-	 *          to the terminating bytes, and return it. If false, returns null.
+	 * @param saveString Whether to collect the string from the current offset to
+	 *          the terminating bytes, and return it. If false, returns null.
 	 * @param blockSize The block size to use when reading bytes in chunks.
 	 * @param terminators The strings for which to search.
 	 * @throws IOException If saveString flag is set and the maximum search length
@@ -472,7 +469,7 @@ public interface DataHandle<L extends Location> extends WrapperPlugin<L>,
 		final int ch1 = read();
 		final int ch2 = read();
 		if ((ch1 | ch2) < 0) throw new EOFException();
-		return (short)((ch1 << 8) + (ch2 << 0));
+		return (short) ((ch1 << 8) + (ch2 << 0));
 	}
 
 	@Override
@@ -549,7 +546,7 @@ public interface DataHandle<L extends Location> extends WrapperPlugin<L>,
 					if (read() != '\n') seek(cur);
 					break;
 				default:
-					input.append((char)c);
+					input.append((char) c);
 					break;
 			}
 		}
@@ -637,7 +634,7 @@ public interface DataHandle<L extends Location> extends WrapperPlugin<L>,
 	@Override
 	default void writeChars(final String s) throws IOException {
 		int len = s.length();
-		for (int i = 0 ; i < len ; i++) {
+		for (int i = 0; i < len; i++) {
 			int v = s.charAt(i);
 			write((v >>> 8) & 0xFF);
 			write((v >>> 0) & 0xFF);
