@@ -335,62 +335,64 @@ public interface DataHandle<L extends Location> extends WrapperPlugin<L>,
 			if (len > maxTermLen) maxTermLen = len;
 		}
 
-		@SuppressWarnings("resource")
-		final InputStreamReader in =
-			new InputStreamReader(new DataHandleInputStream<>(this), getEncoding());
-		final char[] buf = new char[blockSize];
-		long loc = 0;
-		while (loc < maxLen && offset() < length() - 1) {
-			// if we're not saving the string, drop any old, unnecessary output
-			if (!saveString) {
-				final int outLen = out.length();
-				if (outLen >= maxTermLen) {
-					final int dropIndex = outLen - maxTermLen + 1;
-					final String last = out.substring(dropIndex, outLen);
-					out.setLength(0);
-					out.append(last);
-					bytesDropped += dropIndex;
+		try (final InputStreamReader in = new InputStreamReader(
+			new DataHandleInputStream<>(this), getEncoding()))
+		{
+			final char[] buf = new char[blockSize];
+			long loc = 0;
+			while (loc < maxLen && offset() < length() - 1) {
+				// if we're not saving the string, drop any old, unnecessary output
+				if (!saveString) {
+					final int outLen = out.length();
+					if (outLen >= maxTermLen) {
+						final int dropIndex = outLen - maxTermLen + 1;
+						final String last = out.substring(dropIndex, outLen);
+						out.setLength(0);
+						out.append(last);
+						bytesDropped += dropIndex;
+					}
 				}
+
+				// read block from stream
+				final int r = in.read(buf, 0, blockSize);
+				if (r <= 0) throw new IOException("Cannot read from stream: " + r);
+
+				// append block to output
+				out.append(buf, 0, r);
+
+				// check output, returning smallest possible string
+				int min = Integer.MAX_VALUE;
+				int tagLen = 0;
+				for (final String t : terminators) {
+					final int len = t.length();
+					final int start = (int) (loc - bytesDropped - len);
+					final int value = out.indexOf(t, start < 0 ? 0 : start);
+					if (value >= 0 && value < min) {
+						match = true;
+						min = value;
+						tagLen = len;
+					}
+				}
+
+				if (match) {
+					// reset stream to proper location
+					seek(startPos + bytesDropped + min + tagLen);
+
+					// trim output string
+					if (saveString) {
+						out.setLength(min + tagLen);
+						return out.toString();
+					}
+					return null;
+				}
+
+				loc += r;
 			}
 
-			// read block from stream
-			final int r = in.read(buf, 0, blockSize);
-			if (r <= 0) throw new IOException("Cannot read from stream: " + r);
-
-			// append block to output
-			out.append(buf, 0, r);
-
-			// check output, returning smallest possible string
-			int min = Integer.MAX_VALUE, tagLen = 0;
-			for (final String t : terminators) {
-				final int len = t.length();
-				final int start = (int) (loc - bytesDropped - len);
-				final int value = out.indexOf(t, start < 0 ? 0 : start);
-				if (value >= 0 && value < min) {
-					match = true;
-					min = value;
-					tagLen = len;
-				}
-			}
-
-			if (match) {
-				// reset stream to proper location
-				seek(startPos + bytesDropped + min + tagLen);
-
-				// trim output string
-				if (saveString) {
-					out.setLength(min + tagLen);
-					return out.toString();
-				}
-				return null;
-			}
-
-			loc += r;
+			// no match
+			if (tooLong) throw new IOException("Maximum search length reached.");
+			return saveString ? out.toString() : null;
 		}
-
-		// no match
-		if (tooLong) throw new IOException("Maximum search length reached.");
-		return saveString ? out.toString() : null;
 	}
 
 	// -- InputStream look-alikes --
@@ -649,7 +651,8 @@ public interface DataHandle<L extends Location> extends WrapperPlugin<L>,
 
 		int strlen = str.length();
 		int utflen = 0;
-		int c, count = 0;
+		int c = 0;
+		int count = 0;
 
 		/* use charAt instead of copying String to char array */
 		for (int i = 0; i < strlen; i++) {
