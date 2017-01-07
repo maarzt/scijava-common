@@ -51,6 +51,10 @@ public class FileLocation extends AbstractLocation {
 	public FileLocation(final String path) {
 		this(new File(path));
 	}
+	
+	public FileLocation(final URI path) {
+		this(new File(path));
+	}
 
 	// -- FileLocation methods --
 

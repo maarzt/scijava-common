@@ -29,28 +29,68 @@
  * #L%
  */
 
-package org.scijava.io;
-
-import static org.junit.Assert.assertSame;
+package org.scijava.io.remote;
 
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 
-import org.junit.Test;
+import org.scijava.io.AbstractLocation;
+import org.scijava.io.Location;
 
 /**
- * Tests {@link URLLocation}.
- * 
+ * A {@link Location} that can be accessed via HTTP. backed by an {@link URL}.
+ *
  * @author Curtis Rueden
+ * @author Gabriel Einsdorf
  */
-public class URLLocationTest {
+public class HTTPLocation extends AbstractLocation {
 
-	/** Tests {@link URLLocation#URLLocation(URL)}. */
-	@Test
-	public void testURL() throws MalformedURLException {
-		final URL url = new URL("file:///non/existent/url");
-		final URLLocation loc = new URLLocation(url);
-		assertSame(url, loc.getURL());
+	/** The URL backing this location. */
+	private final URL url;
+
+	public HTTPLocation(final URL url) {
+		this.url = url;
+	}
+
+	/**
+	 * Creates an HTTPLocation from an URI.
+	 * 
+	 * @param uri the uri of the location
+	 * @throws MalformedURLException if the uri can not be converted to an URL, or
+	 *           the uri does not point to an HTTP(S) location.
+	 */
+	public HTTPLocation(final URI uri) throws MalformedURLException {
+		String scheme = uri.getScheme();
+		if ("http".equals(scheme) || "https".equals(scheme)) {
+			this.url = uri.toURL();
+		}
+		throw new MalformedURLException(
+			"URI does not point to an HTTP(S) location.");
+	}
+
+	// -- HTTPLocation methods --
+
+	/** Gets the associated {@link URL}. */
+	public URL getURL() {
+		return url;
+	}
+
+	// -- Location methods --
+
+	/**
+	 * Gets the associated {@link URI}, or null if this URL is not formatted
+	 * strictly according to to RFC2396 and cannot be converted to a URI.
+	 */
+	@Override
+	public URI getURI() {
+		try {
+			return getURL().toURI();
+		}
+		catch (final URISyntaxException exc) {
+			return null;
+		}
 	}
 
 }

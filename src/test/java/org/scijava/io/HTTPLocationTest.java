@@ -31,45 +31,36 @@
 
 package org.scijava.io;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
+
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 
+import org.junit.Test;
+import org.scijava.io.remote.HTTPLocation;
+
 /**
- * {@link Location} backed by a {@link URL}.
- *
+ * Tests {@link HTTPLocation}.
+ * 
  * @author Curtis Rueden
  */
-public class URLLocation extends AbstractLocation {
-
-	/** The URL backing this location. */
-	private final URL url;
-
-	public URLLocation(final URL url) {
-		this.url = url;
-	}
-
-	// -- URLLocation methods --
-
-	/** Gets the associated {@link URL}. */
-	public URL getURL() {
-		return url;
-	}
-
-	// -- Location methods --
+public class HTTPLocationTest {
 
 	/**
-	 * Gets the associated {@link URI}, or null if this URL is not formatted
-	 * strictly according to to RFC2396 and cannot be converted to a URI.
+	 * Tests {@link HTTPLocation#HTTPLocation(URL)}.
+	 * 
+	 * @throws URISyntaxException
 	 */
-	@Override
-	public URI getURI() {
-		try {
-			return getURL().toURI();
-		}
-		catch (final URISyntaxException exc) {
-			return null;
-		}
+	@Test
+	public void testURL() throws MalformedURLException, URISyntaxException {
+		final URL url = new URL("http://www.scijava.org/_static/scijava.png");
+		final HTTPLocation loc = new HTTPLocation(url);
+		assertSame(url, loc.getURL());
+
+		assertEquals(url.toURI(), loc.getURI());
 	}
 
 }

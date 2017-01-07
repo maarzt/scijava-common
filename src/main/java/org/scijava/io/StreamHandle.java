@@ -8,13 +8,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -45,7 +45,7 @@ import org.scijava.util.Bytes;
 /**
  * A {@link DataHandle} backed by an {@link InputStream} and/or
  * {@link OutputStream}.
- * 
+ *
  * @author Curtis Rueden
  * @author Melissa Linkert
  */
@@ -60,14 +60,14 @@ public interface StreamHandle<L extends Location> extends DataHandle<L> {
 
 	/**
 	 * Gets an input stream for reading data, positioned at the current offset.
-	 * 
+	 *
 	 * @return the appropriate input stream, or null if the handle is write-only.
 	 */
 	InputStream in();
 
 	/**
 	 * Gets an output stream for writing data, positioned at the current offset.
-	 * 
+	 *
 	 * @return the appropriate output stream, or null if the handle is read-only.
 	 */
 	OutputStream out();
@@ -75,7 +75,7 @@ public interface StreamHandle<L extends Location> extends DataHandle<L> {
 	/**
 	 * Gets the maximum number of bytes to keep buffered when reading from the
 	 * input stream.
-	 * 
+	 *
 	 * @see InputStream#mark(int)
 	 */
 	int getMaxBufferSize();
@@ -83,17 +83,23 @@ public interface StreamHandle<L extends Location> extends DataHandle<L> {
 	/**
 	 * Sets the maximum number of bytes to keep buffered when reading from the
 	 * input stream.
-	 * 
+	 *
 	 * @see InputStream#mark(int)
 	 */
 	void setMaxBufferSize(int maxBufferSize);
 
 	/**
 	 * Gets the currently marked position of the data handle.
-	 * 
+	 *
 	 * @see InputStream#mark(int)
 	 */
 	long getMark();
+
+	/**
+	 * Marks the current position in the stream. Calls to reset will return to
+	 * this position.
+	 */
+	void mark();
 
 	void setOffset(long offset);
 
@@ -119,10 +125,10 @@ public interface StreamHandle<L extends Location> extends DataHandle<L> {
 			// jump from the current offset
 			jump(pos - off);
 		}
-		else if (pos >= mark) {
+		else if (pos >= getMark()) {
 			// jump from the latest mark
 			in().reset();
-			jump(pos - mark);
+			jump(pos - getMark());
 		}
 		else {
 			// jump from the beginning of the stream
@@ -130,14 +136,23 @@ public interface StreamHandle<L extends Location> extends DataHandle<L> {
 			jump(pos);
 		}
 		setOffset(pos);
+
+		// TODO: Implement this
 		// under what circumstances do we set the mark?
 		// heuristic could be:
 		// - start by calling mark(bufLimit)
 		// - if mark becomes invalid (we need to track this), then remark?
-		//   this is what BF does.
-		//   or: we could remark if we reach the halfway point?
-		// - 
+		// this is what BF does.
+		// or: we could remark if we reach the halfway point?
+		// -
 	}
+
+	/**
+	 * Resets the stream to it's start.
+	 *
+	 * @throws IOException If something goes wrong with the reset
+	 */
+	void resetStream() throws IOException;
 
 	default void jump(final long n) throws IOException, EOFException {
 		long remain = n;

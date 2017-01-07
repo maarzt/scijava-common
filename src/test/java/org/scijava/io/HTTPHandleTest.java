@@ -35,16 +35,19 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
+import org.scijava.io.remote.HTTPHandle;
+import org.scijava.io.remote.HTTPLocation;
+
 /**
- * Tests {@link URLHandle}.
+ * Tests {@link HTTPHandle}.
  *
  * @author Curtis Rueden
  */
-public class URLHandleTest extends DataHandleTest {
+public class HTTPHandleTest extends DataHandleTest {
 
 	@Override
 	public Class<? extends DataHandle<?>> getExpectedHandleType() {
-		return URLHandle.class;
+		return HTTPHandle.class;
 	}
 
 	@Override
@@ -53,7 +56,7 @@ public class URLHandleTest extends DataHandleTest {
 		final File tmpFile = File.createTempFile("URLHandleTest", "test-url");
 		tmpFile.deleteOnExit();
 		populateData(new FileOutputStream(tmpFile));
-		return new URLLocation(tmpFile.toURI().toURL());
+		return new HTTPLocation(tmpFile.toURI().toURL());
 	}
 
 }

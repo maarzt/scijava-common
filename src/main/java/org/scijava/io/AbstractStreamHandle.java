@@ -52,8 +52,13 @@ public abstract class AbstractStreamHandle<L extends Location> extends
 	// -- StreamHandle methods --
 
 	@Override
-	public void advance(final long bytes) {
-		offset += bytes;
+	public long getMark() {
+		return mark;
+	}
+
+	@Override
+	public void setOffset(long offset) {
+		this.offset = offset;
 	}
 
 	// -- DataHandle methods --

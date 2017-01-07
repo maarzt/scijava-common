@@ -29,26 +29,26 @@
  * #L%
  */
 
-package org.scijava.io;
+package org.scijava.io.remote;
 
-import java.io.BufferedInputStream;
-import java.io.DataInputStream;
 import java.io.IOException;
-import java.net.URL;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URLConnection;
 
-import org.scijava.Context;
+import org.scijava.io.AbstractStreamHandle;
+import org.scijava.io.DataHandle;
 import org.scijava.plugin.Plugin;
 
 /**
- * {@link DataHandle} for a {@link URLLocation}.
+ * {@link DataHandle} for a {@link HTTPLocation}.
  * 
  * @author Curtis Rueden
  * @author Melissa Linkert
  * @see java.net.URLConnection
  */
 @Plugin(type = DataHandle.class)
-public class URLHandle extends AbstractStreamHandle<URLLocation> {
+public class HTTPHandle extends AbstractStreamHandle<HTTPLocation> {
 
 	// -- Fields --
 
@@ -59,14 +59,18 @@ public class URLHandle extends AbstractStreamHandle<URLLocation> {
 
 	@Override
 	public void resetStream() throws IOException {
-		conn = (new URL(url)).openConnection();
-		setStream(new DataInputStream(new BufferedInputStream(
-			conn.getInputStream(), RandomAccessInputStream.MAX_OVERHEAD)));
-		setFp(0);
-		setMark(0);
-		setLength(conn.getContentLength());
-		if (getStream() != null) getStream().mark(
-			RandomAccessInputStream.MAX_OVERHEAD);
+
+		// FIXME Implement
+		throw new UnsupportedOperationException("Not Implemented yet!");
+
+//		conn = (new URL(url)).openConnection();
+//		setStream(new DataInputStream(new BufferedInputStream(
+//			conn.getInputStream(), RandomAccessInputStream.MAX_OVERHEAD)));
+//		setFp(0);
+//		setMark(0);
+//		setLength(conn.getContentLength());
+//		if (getStream() != null) getStream().mark(
+//			RandomAccessInputStream.MAX_OVERHEAD);
 	}
 
 	// -- Helper methods --
@@ -81,6 +85,65 @@ public class URLHandle extends AbstractStreamHandle<URLLocation> {
 		conn = get().getURL().openConnection();
 		conn.setDoInput(isReadable());
 		conn.setDoOutput(isWritable());
+	}
+
+	@Override
+	public void mark() {
+		// TODO Auto-generated method stub
+
+		in().mark(123);
+	}
+
+	@Override
+	public InputStream in() {
+		try {
+			return conn().getInputStream();
+		}
+		catch (IOException exc) {
+			return null; // FIXME: this is ugly!
+		}
+	}
+
+	@Override
+	public OutputStream out() {
+		// HTTP is read only for now.
+		return null;
+	}
+
+	@Override
+	public int getMaxBufferSize() {
+		return 0;
+	}
+
+	@Override
+	public void setMaxBufferSize(int maxBufferSize) {
+
+	}
+
+	@Override
+	public long length() throws IOException {
+		return conn().getContentLengthLong();
+	}
+
+	@Override
+	public void setLength(long length) throws IOException {
+		
+	}
+
+	@Override
+	public boolean isReadable() {
+		return true;
+	}
+
+	@Override
+	public boolean isWritable() {
+		// currently no support for PUT!
+		return false;
+	}
+
+	@Override
+	public Class<HTTPLocation> getType() {
+		return HTTPLocation.class;
 	}
 
 }
