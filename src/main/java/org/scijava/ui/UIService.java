@@ -147,25 +147,38 @@ public interface UIService extends SciJavaService {
 	DisplayViewer<?> getDisplayViewer(Display<?> display);
 
 	/**
-	 * Creates a {@link Display} for the given object, and shows it using an
-	 * appropriate UI widget of the default user interface.
+	 * Shows the object onscreen using an appropriate UI widget of the default
+	 * user interface.
+	 *
+	 * @param o The object to be shown.
+	 * @return The UI widget used to show the object. In the common case, this
+	 *         will be an instance of {@link DisplayViewer}, but it is not
+	 *         guaranteed.
 	 */
-	void show(Object o);
+	Object show(Object o);
 
 	/**
-	 * Creates a {@link Display} for the given object, and shows it using an
-	 * appropriate UI widget of the default user interface.
-	 * 
-	 * @param name The name to use when displaying the object.
-	 * @param o The object to be displayed.
+	 * Shows the object onscreen using an appropriate UI widget of the default
+	 * user interface.
+	 *
+	 * @param name The name to use when showing the object.
+	 * @param o The object to be shown.
+	 * @return The UI widget used to show the object. In the common case, this
+	 *         will be an instance of {@link DisplayViewer}, but it is not
+	 *         guaranteed.
 	 */
-	void show(String name, Object o);
+	Object show(String name, Object o);
 
 	/**
-	 * Creates and shows the given {@link Display} using an appropriate UI widget
-	 * of the default user interface.
+	 * Shows the display onscreen using an appropriate UI widget of the default
+	 * user interface.
+	 *
+	 * @param display The display to be shown.
+	 * @return The UI widget used to show the display. In the common case, this
+	 *         will be an instance of {@link DisplayViewer}, but it is not
+	 *         guaranteed.
 	 */
-	void show(Display<?> display);
+	Object show(Display<?> display);
 
 	/**
 	 * Displays a dialog prompt.

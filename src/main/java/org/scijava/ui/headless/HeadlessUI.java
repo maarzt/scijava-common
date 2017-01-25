@@ -72,15 +72,17 @@ public class HeadlessUI extends AbstractRichPlugin implements UserInterface {
 	}
 
 	@Override
-	public void show(final String name, final Object o) {
+	public Object show(final String name, final Object o) {
 		// NB: Rather than creating a Display, let's just log it.
 		log().info(name + " = " + o);
+		return null;
 	}
 
 	@Override
-	public void show(final Display<?> display) {
+	public Object show(final Display<?> display) {
 		// NB: Rather than looking for a DisplayViewer, let's just log it.
 		log().info(display.getName() + " = " + ListUtils.string(display, false));
+		return null;
 	}
 
 	@Override

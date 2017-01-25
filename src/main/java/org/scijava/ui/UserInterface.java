@@ -38,6 +38,7 @@ import org.scijava.display.Display;
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.RichPlugin;
 import org.scijava.ui.console.ConsolePane;
+import org.scijava.ui.viewer.DisplayViewer;
 import org.scijava.ui.viewer.DisplayWindow;
 import org.scijava.widget.FileWidget;
 
@@ -69,21 +70,38 @@ public interface UserInterface extends RichPlugin, Disposable {
 	/** Whether this UI is visible onscreen. */
 	boolean isVisible();
 
-	/** Shows the object onscreen using an appropriate UI widget. */
-	default void show(final Object o) {
-		show(null, o);
+	/**
+	 * Shows the object onscreen using an appropriate UI widget.
+	 *
+	 * @param o The object to be shown.
+	 * @return The UI widget used to show the object. In the common case, this
+	 *         will be an instance of {@link DisplayViewer}, but it is not
+	 *         guaranteed.
+	 */
+	default Object show(final Object o) {
+		return show(null, o);
 	}
 
 	/**
 	 * Shows the object onscreen using an appropriate UI widget.
 	 *
-	 * @param name The name to use when displaying the object.
-	 * @param o The object to be displayed.
+	 * @param name The name to use when showing the object.
+	 * @param o The object to be shown.
+	 * @return The UI widget used to show the object. In the common case, this
+	 *         will be an instance of {@link DisplayViewer}, but it is not
+	 *         guaranteed.
 	 */
-	void show(String name, Object o);
+	Object show(String name, Object o);
 
-	/** Shows the display onscreen using an appropriate UI widget. */
-	void show(Display<?> display);
+	/**
+	 * Shows the display onscreen using an appropriate UI widget.
+	 *
+	 * @param display The display to be shown.
+	 * @return The UI widget used to show the display. In the common case, this
+	 *         will be an instance of {@link DisplayViewer}, but it is not
+	 *         guaranteed.
+	 */
+	Object show(Display<?> display);
 
 	/**
 	 * Gets the desktop, for use with multi-document interfaces (MDI), or null if

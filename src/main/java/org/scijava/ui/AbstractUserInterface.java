@@ -92,26 +92,28 @@ public abstract class AbstractUserInterface extends AbstractRichPlugin
 	}
 
 	@Override
-	public void show(final String name, final Object o) {
+	public Object show(final String name, final Object o) {
 		final Display<?> display;
 		if (o instanceof Display) {
 			display = (Display<?>) o;
 		}
 		else {
-			display = displayService.createDisplay(name, o);
+			// NB: Create the display without publishing an event.
+			// This prevents downstream event handlers from attempting to show
+			// the display themselves; we are already taking care of that here.
+			display = displayService.createDisplayQuietly(o);
+			if (display == null) return null;
+			if (name != null) display.setName(name);
 		}
-		if (!isVisible()) {
-			// NB: If this UI is invisible, the display will not be automatically
-			// shown. So in that case, we show it explicitly here.
-			show(display);
-		}
+		return show(display);
 	}
 
 	@Override
-	public void show(final Display<?> display) {
-		if (uiService.getDisplayViewer(display) != null) {
+	public Object show(final Display<?> display) {
+		final DisplayViewer<?> existingViewer = uiService.getDisplayViewer(display);
+		if (existingViewer != null) {
 			// display is already being shown
-			return;
+			return existingViewer;
 		}
 
 		final List<PluginInfo<DisplayViewer<?>>> viewers =
@@ -130,7 +132,7 @@ public abstract class AbstractUserInterface extends AbstractRichPlugin
 		if (displayViewer == null) {
 			log.warn("For UI '" + getClass().getName() +
 				"': no suitable viewer for display: " + display);
-			return;
+			return null;
 		}
 
 		final DisplayViewer<?> finalViewer = displayViewer;
@@ -145,6 +147,7 @@ public abstract class AbstractUserInterface extends AbstractRichPlugin
 				display.update();
 			}
 		});
+		return displayViewer;
 	}
 
 	@Override

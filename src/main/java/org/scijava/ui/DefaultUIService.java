@@ -231,18 +231,18 @@ public final class DefaultUIService extends AbstractService implements
 	}
 
 	@Override
-	public void show(final Object o) {
-		getDefaultUI().show(o);
+	public Object show(final Object o) {
+		return getDefaultUI().show(o);
 	}
 
 	@Override
-	public void show(final String name, final Object o) {
-		getDefaultUI().show(name, o);
+	public Object show(final String name, final Object o) {
+		return getDefaultUI().show(name, o);
 	}
 
 	@Override
-	public void show(final Display<?> display) {
-		getDefaultUI().show(display);
+	public Object show(final Display<?> display) {
+		return getDefaultUI().show(display);
 	}
 
 	@Override
