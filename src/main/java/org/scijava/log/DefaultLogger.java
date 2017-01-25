@@ -31,10 +31,8 @@
 
 package org.scijava.log;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Default implementation for {@link Logger}.
@@ -49,10 +47,7 @@ public class DefaultLogger implements Logger {
 
 	private String name;
 
-	/** List of listeners for logging events. */
-	private ArrayList<LogListener> listeners;
-
-	private LogListener[] cachedListeners;
+	private List<LogListener> listeners = new CopyOnWriteArrayList<>();
 
 	// -- Constructor --
 
@@ -116,29 +111,19 @@ public class DefaultLogger implements Logger {
 
 	@Override
 	public void addLogListener(final LogListener l) {
-		if (listeners == null) initListeners();
-		synchronized (listeners) {
-			listeners.add(l);
-			cacheListeners();
-		}
+		listeners.add(Objects.requireNonNull(l));
 	}
 
 	@Override
 	public void removeLogListener(final LogListener l) {
-		if (listeners == null) initListeners();
-		synchronized (listeners) {
-			listeners.remove(l);
-			cacheListeners();
-		}
+		listeners.remove(Objects.requireNonNull(l));
 	}
 
 	@Override
 	public void notifyListeners(final int level, final Object msg,
 		final Throwable t)
 	{
-		if (listeners == null) initListeners();
-		final LogListener[] toNotify = cachedListeners;
-		for (final LogListener l : toNotify)
+		for (final LogListener l : listeners)
 			l.messageLogged(level, msg, t);
 	}
 
@@ -154,21 +139,7 @@ public class DefaultLogger implements Logger {
 		this.name = name;
 	}
 
-	// -- Helper methods - lazy initialization --
-
-	/** Initializes {@link #listeners} and related data structures. */
-	private synchronized void initListeners() {
-		if (listeners != null) return; // already initialized
-
-		listeners = new ArrayList<>();
-		cachedListeners = listeners.toArray(new LogListener[0]);
-	}
-
 	// -- Helper methods --
-
-	private void cacheListeners() {
-		cachedListeners = listeners.toArray(new LogListener[listeners.size()]);
-	}
 
 	private String callingClass() {
 		final String thisClass = DefaultLogger.class.getName();
