@@ -72,25 +72,43 @@ public abstract class AbstractLogService extends AbstractService implements
 		return channels.values();
 	}
 
+	@Deprecated
+	@Override
+	public int getLevel() {
+		return getLogLevel().intLevel();
+	}
+
+	@Deprecated
+	@Override
+	public void setLevel(int level) {
+		setLogLevel(LogLevel.valueOf(level));
+	}
+
+	@Deprecated
+	@Override
+	public void setLevel(String classOrPackageName, int level) {
+		setLogLevel(classOrPackageName, LogLevel.valueOf(level));
+	}
+
 	// -- Logger methods --
 
 	@Override
-	public int getLevel() {
-		return defaultChannel.getLevel();
+	public LogLevel getLogLevel() {
+		return defaultChannel.getLogLevel();
 	}
 
 	@Override
-	public void setLevel(final int level) {
-		defaultChannel.setLevel(level);
+	public void setLogLevel(final LogLevel level) {
+		defaultChannel.setLogLevel(level);
 	}
 
 	@Override
-	public void setLevel(final String classOrPackageName, final int level) {
-		defaultChannel.setLevel(classOrPackageName, level);
+	public void setLogLevel(final String classOrPackageName, final LogLevel level) {
+		defaultChannel.setLogLevel(classOrPackageName, level);
 	}
 
 	@Override
-	public void alwaysLog(final int level, final Object msg,
+	public void alwaysLog(final LogLevel level, final Object msg,
 		final Throwable t)
 	{
 		defaultChannel.alwaysLog(level, msg, t);
@@ -107,7 +125,7 @@ public abstract class AbstractLogService extends AbstractService implements
 	}
 
 	@Override
-	public void notifyListeners(final int level, final Object msg,
+	public void notifyListeners(final LogLevel level, final Object msg,
 		final Throwable t)
 	{
 		defaultChannel.notifyListeners(level, msg, t);

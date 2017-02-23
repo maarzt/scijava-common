@@ -64,22 +64,31 @@ public interface LogService extends SciJavaService, Logger {
 
 	// -- Deprecated --
 
+	@Deprecated
+	int getLevel();
+
+	@Deprecated
+	void setLevel(int level);
+
+	@Deprecated
+	void setLevel(String classOrPackageName, int level);
+
 	/** @deprecated Use {@link LogLevel#NONE}. */
 	@Deprecated
-	int NONE = LogLevel.NONE;
+	int NONE = LogLevel.NONE.intLevel();
 	/** @deprecated Use {@link LogLevel#ERROR}. */
 	@Deprecated
-	int ERROR = LogLevel.ERROR;
+	int ERROR = LogLevel.ERROR.intLevel();
 	/** @deprecated Use {@link LogLevel#WARN}. */
 	@Deprecated
-	int WARN = LogLevel.WARN;
+	int WARN = LogLevel.WARN.intLevel();
 	/** @deprecated Use {@link LogLevel#INFO}. */
 	@Deprecated
-	int INFO = LogLevel.INFO;
+	int INFO = LogLevel.INFO.intLevel();
 	/** @deprecated Use {@link LogLevel#DEBUG}. */
 	@Deprecated
-	int DEBUG = LogLevel.DEBUG;
+	int DEBUG = LogLevel.DEBUG.intLevel();
 	/** @deprecated Use {@link LogLevel#TRACE}. */
 	@Deprecated
-	int TRACE = LogLevel.TRACE;
+	int TRACE = LogLevel.TRACE.intLevel();
 }

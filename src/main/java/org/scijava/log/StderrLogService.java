@@ -50,10 +50,10 @@ import org.scijava.service.Service;
 public class StderrLogService extends AbstractLogService {
 
 	@Override
-	public void alwaysLog(final int level, final Object msg, final Throwable t) {
-		final String message = LogLevel.prefix(level) + msg;
+	public void alwaysLog(final LogLevel level, final Object msg, final Throwable t) {
+		final String message = level.prefix() + msg;
 		// NB: Emit severe messages to stderr, and less severe ones to stdout.
-		if (level <= LogLevel.WARN) System.err.println(message);
+		if (level.isLowerOrEqual(LogLevel.WARN)) System.err.println(message);
 		else System.out.println(message);
 		if (t != null) t.printStackTrace();
 
@@ -62,4 +62,5 @@ public class StderrLogService extends AbstractLogService {
 		// channel has been overridden somehow, this could really do anything.
 		super.alwaysLog(level, msg, t);
 	}
+
 }

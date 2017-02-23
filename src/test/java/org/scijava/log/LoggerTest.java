@@ -59,7 +59,7 @@ public class LoggerTest {
 		final LogListener l = new LogListener() {
 
 			@Override
-			public void messageLogged(final int level, final Object msg,
+			public void messageLogged(final LogLevel level, final Object msg,
 				final Throwable t)
 			{
 				results.add(new Object[] { level, msg, t });
@@ -79,7 +79,7 @@ public class LoggerTest {
 		assertLogged(WARN, "wyvern", IllegalStateException.class, results.get(2));
 
 		// test that changing the level works
-		log.setLevel(DEBUG);
+		log.setLogLevel(DEBUG);
 		results.clear();
 		log.debug("devilish");
 		log.trace("terrifying");
@@ -95,7 +95,7 @@ public class LoggerTest {
 
 	// -- Helper methods --
 
-	private void assertLogged(final int level, final String msg,
+	private void assertLogged(final LogLevel level, final String msg,
 		final Class<? extends Throwable> t, final Object[] result)
 	{
 		assertEquals(level, result[0]);

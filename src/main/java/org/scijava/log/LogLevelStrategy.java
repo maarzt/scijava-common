@@ -40,21 +40,19 @@ import java.util.Properties;
  */
 class LogLevelStrategy {
 
-	private final Map<String, Integer> classAndPackageLevels = new HashMap<>();
+	private final Map<String, LogLevel> classAndPackageLevels = new HashMap<>();
 
-	private int currentLevel = levelFromEnvironment();
+	private LogLevel currentLevel = levelFromEnvironment();
 
 	LogLevelStrategy() {
 		// check SciJava log level system properties for initial logging levels
 
 		// global log level property
-		final String logProp = System.getProperty(LogService.LOG_LEVEL_PROPERTY);
-		final int level = LogLevel.value(logProp);
-		if (level >= 0) setLevel(level);
-
-		if (getLevel() == 0) {
-			// use the default, which is INFO unless the DEBUG env. variable is set
-			setLevel(levelFromEnvironment());
+		try {
+			final String logProp = System.getProperty(LogService.LOG_LEVEL_PROPERTY);
+			setLogLevel(logLevelOf(logProp));
+		} catch(NullPointerException | IllegalArgumentException e) {
+			setLogLevel(levelFromEnvironment());
 		}
 
 		// populate custom class- and package-specific log level properties
@@ -66,17 +64,19 @@ class LogLevelStrategy {
 			if (!propName.startsWith(logLevelPrefix)) continue;
 			final String classOrPackageName = propName.substring(logLevelPrefix
 					.length());
-			setLevel(classOrPackageName, LogLevel.value(props.getProperty(propName)));
+			try {
+				setLogLevel(classOrPackageName, logLevelOf(props.getProperty(propName)));
+			} catch(NullPointerException | IllegalArgumentException ignore) { }
 		}
 
 	}
 
-	public int getLevel() {
+	public LogLevel getLogLevel() {
 		if (!classAndPackageLevels.isEmpty()) {
 			// check for a custom log level for calling class or its parent packages
 			String classOrPackageName = callingClass();
 			while (classOrPackageName != null) {
-				final Integer level = classAndPackageLevels.get(classOrPackageName);
+				final LogLevel level = classAndPackageLevels.get(classOrPackageName);
 				if (level != null) return level;
 				classOrPackageName = parentPackage(classOrPackageName);
 			}
@@ -85,11 +85,11 @@ class LogLevelStrategy {
 		return currentLevel;
 	}
 
-	public void setLevel(final int level) {
+	public void setLogLevel(final LogLevel level) {
 		currentLevel = level;
 	}
 
-	public void setLevel(final String classOrPackageName, final int level) {
+	public void setLogLevel(final String classOrPackageName, final LogLevel level) {
 		classAndPackageLevels.put(classOrPackageName, level);
 	}
 
@@ -111,7 +111,34 @@ class LogLevelStrategy {
 		return classOrPackageName.substring(0, dot);
 	}
 
-	private int levelFromEnvironment() {
+	private LogLevel levelFromEnvironment() {
 		return System.getenv("DEBUG") == null ? LogLevel.INFO : LogLevel.DEBUG;
 	}
+
+	/**
+	 * Extracts the log level value from a string.
+	 *
+	 * @return The log level, or -1 if the level cannot be parsed.
+	 */
+	public static LogLevel logLevelOf(final String s) {
+		if (s == null)
+			throw new NullPointerException();
+
+		// check whether it's a string label (e.g., "debug")
+		final String log = s.trim().toLowerCase();
+		if (log.startsWith("n")) return LogLevel.NONE;
+		if (log.startsWith("e")) return LogLevel.ERROR;
+		if (log.startsWith("w")) return LogLevel.WARN;
+		if (log.startsWith("i")) return LogLevel.INFO;
+		if (log.startsWith("d")) return LogLevel.DEBUG;
+		if (log.startsWith("t")) return LogLevel.TRACE;
+
+		// check whether it's a numerical value (e.g., 5)
+		try {
+			return LogLevel.valueOf(Integer.parseInt(log));
+		}
+		catch (final NumberFormatException exc) { }
+		throw new IllegalArgumentException();
+	}
+
 }

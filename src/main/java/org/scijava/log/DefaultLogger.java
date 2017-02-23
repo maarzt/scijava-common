@@ -50,22 +50,22 @@ public class DefaultLogger implements Logger {
 	// -- Logger methods --
 
 	@Override
-	public int getLevel() {
-		return logLevelStrategy.getLevel();
+	public LogLevel getLogLevel() {
+		return logLevelStrategy.getLogLevel();
 	}
 
 	@Override
-	public void setLevel(final int level) {
-		logLevelStrategy.setLevel(level);
+	public void setLogLevel(final LogLevel level) {
+		logLevelStrategy.setLogLevel(level);
 	}
 
 	@Override
-	public void setLevel(final String classOrPackageName, final int level) {
-		logLevelStrategy.setLevel(classOrPackageName, level);
+	public void setLogLevel(final String classOrPackageName, final LogLevel level) {
+		logLevelStrategy.setLogLevel(classOrPackageName, level);
 	}
 
 	@Override
-	public void alwaysLog(final int level, final Object msg, final Throwable t) {
+	public void alwaysLog(final LogLevel level, final Object msg, final Throwable t) {
 		notifyListeners(level, msg, t);
 	}
 
@@ -80,7 +80,7 @@ public class DefaultLogger implements Logger {
 	}
 
 	@Override
-	public void notifyListeners(final int level, final Object msg,
+	public void notifyListeners(final LogLevel level, final Object msg,
 		final Throwable t)
 	{
 		for (final LogListener l : listeners)

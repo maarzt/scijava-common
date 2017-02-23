@@ -132,19 +132,19 @@ public interface Logger extends Named {
 		return isLevel(WARN);
 	}
 
-	default boolean isLevel(final int level) {
-		return getLevel() >= level;
+	default boolean isLevel(final LogLevel level) {
+		return getLogLevel().isHigherOrEqual(level);
 	}
 
 	/**
 	 * Logs a message.
 	 * 
 	 * @param level The level at which the message will be logged. If the current
-	 *          level (given by {@link #getLevel()} is below this one, no logging
+	 *          level (given by {@link #getLogLevel()} is below this one, no logging
 	 *          is performed.
 	 * @param msg The message to log.
 	 */
-	default void log(final int level, final Object msg) {
+	default void log(final LogLevel level, final Object msg) {
 		if (isLevel(level)) alwaysLog(level, msg, null);
 	}
 
@@ -152,11 +152,11 @@ public interface Logger extends Named {
 	 * Logs an exception.
 	 * 
 	 * @param level The level at which the exception will be logged. If the
-	 *          current level (given by {@link #getLevel()} is below this one, no
+	 *          current level (given by {@link #getLogLevel()} is below this one, no
 	 *          logging is performed.
 	 * @param t The exception to log.
 	 */
-	default void log(final int level, final Throwable t) {
+	default void log(final LogLevel level, final Throwable t) {
 		if (isLevel(level)) alwaysLog(level, null, t);
 	}
 
@@ -164,20 +164,20 @@ public interface Logger extends Named {
 	 * Logs a message with an exception.
 	 * 
 	 * @param level The level at which the information will be logged. If the
-	 *          current level (given by {@link #getLevel()} is below this one, no
+	 *          current level (given by {@link #getLogLevel()} is below this one, no
 	 *          logging is performed.
 	 * @param msg The message to log.
 	 * @param t The exception to log.
 	 */
-	default void log(final int level, final Object msg, final Throwable t) {
+	default void log(final LogLevel level, final Object msg, final Throwable t) {
 		if (isLevel(level)) alwaysLog(level, msg, t);
 	}
 
-	int getLevel();
+	LogLevel getLogLevel();
 
-	void setLevel(int level);
+	void setLogLevel(LogLevel level);
 
-	void setLevel(String classOrPackageName, int level);
+	void setLogLevel(String classOrPackageName, LogLevel level);
 
 	/**
 	 * Logs a message with an exception, regardless of level. No level threshold
@@ -190,7 +190,7 @@ public interface Logger extends Named {
 	 * @param msg The message to log.
 	 * @param t The exception to log.
 	 */
-	void alwaysLog(int level, Object msg, Throwable t);
+	void alwaysLog(LogLevel level, Object msg, Throwable t);
 
 	/** Adds a listener for logging events. */
 	void addLogListener(LogListener l);
@@ -199,5 +199,5 @@ public interface Logger extends Named {
 	void removeLogListener(LogListener l);
 
 	/** Notifies listeners of a logging event. */
-	void notifyListeners(int level, Object msg, Throwable t);
+	void notifyListeners(LogLevel level, Object msg, Throwable t);
 }

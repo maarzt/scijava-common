@@ -41,5 +41,5 @@ package org.scijava.log;
 public interface LogListener {
 
 	/** Method called when a message is logged. */
-	void messageLogged(int level, Object msg, Throwable t);
+	void messageLogged(LogLevel level, Object msg, Throwable t);
 }

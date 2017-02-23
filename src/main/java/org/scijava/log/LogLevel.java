@@ -31,66 +31,72 @@
 
 package org.scijava.log;
 
+import java.util.EnumSet;
+
 /**
  * Constants for specifying a logger's level of verbosity.
  * 
  * @author Curtis Rueden
  */
-public final class LogLevel {
+public enum LogLevel {
 
-	private LogLevel() {
-		// prevent instantiation of utility class
+	NONE(0),
+	ERROR(1), WARN(2), INFO(3), DEBUG(4), TRACE(5);
+
+	public static final EnumSet<LogLevel> VALID_FOR_MESSAGES = EnumSet.range(ERROR, TRACE);
+
+	public static final LogLevel MAX_VALUE = TRACE;
+
+	public static final LogLevel MIN_VALUE = NONE;
+
+	private final int intLevel;
+
+	LogLevel(int intLevel) {
+		this.intLevel = intLevel;
 	}
 
-	public static final int NONE = 0;
-	public static final int ERROR = 1;
-	public static final int WARN = 2;
-	public static final int INFO = 3;
-	public static final int DEBUG = 4;
-	public static final int TRACE = 5;
-
-	public static String prefix(final int level) {
-		switch (level) {
-			case ERROR:
-				return "[ERROR] ";
-			case WARN:
-				return "[WARNING] ";
-			case INFO:
-				return "[INFO] ";
-			case DEBUG:
-				return "[DEBUG] ";
-			case TRACE:
-				return "[TRACE] ";
-			default:
-				return "[LEVEL:" + level + "] ";
-		}
+	public int intLevel() {
+		return intLevel;
 	}
 
-	/**
-	 * Extracts the log level value from a string.
-	 * 
-	 * @return The log level, or -1 if the level cannot be parsed.
-	 */
-	public static int value(final String s) {
-		if (s == null) return -1;
+	public String prefix() {
+		return "[" + toString() + "] ";
+	}
 
-		// check whether it's a string label (e.g., "debug")
-		final String log = s.trim().toLowerCase();
-		if (log.startsWith("n")) return LogLevel.NONE;
-		if (log.startsWith("e")) return LogLevel.ERROR;
-		if (log.startsWith("w")) return LogLevel.WARN;
-		if (log.startsWith("i")) return LogLevel.INFO;
-		if (log.startsWith("d")) return LogLevel.DEBUG;
-		if (log.startsWith("t")) return LogLevel.TRACE;
+	public static LogLevel valueOf(int intLevel) {
+		switch (intLevel) {
+			case 0: return NONE;
+			case 1: return ERROR;
+			case 2: return WARN;
+			case 3: return INFO;
+			case 4: return DEBUG;
+			case 5: return TRACE;
+		}
+		throw new IllegalArgumentException();
+	}
 
-		// check whether it's a numerical value (e.g., 5)
-		try {
-			return Integer.parseInt(log);
-		}
-		catch (final NumberFormatException exc) {
-			// nope!
-		}
-		return -1;
+	public boolean isHigherThan(LogLevel level) {
+		return intLevel() > level.intLevel();
+	}
+
+	public boolean isLowerThan(LogLevel level) {
+		return intLevel() < level.intLevel();
+	}
+
+	public boolean isHigherOrEqual(LogLevel level) {
+		return intLevel() >= level.intLevel();
+	}
+
+	public boolean isLowerOrEqual(LogLevel level) {
+		return intLevel() <= level.intLevel();
+	}
+
+	public static LogLevel max(LogLevel a, LogLevel b) {
+		return a.isHigherThan(b) ? a : b;
+	}
+
+	public static LogLevel min(LogLevel a, LogLevel b) {
+		return a.isLowerThan(b) ? a : b;
 	}
 
 }

@@ -45,8 +45,8 @@ public class LogServiceTest {
 	@Test
 	public void testDefaultLevel() {
 		final LogService log = new StderrLogService();
-		int level = log.getLevel();
+		LogLevel level = log.getLogLevel();
 		assertTrue("default level (" + level + //
-			") is at least INFO(" + WARN + ")", level >= WARN);
+			") is at least INFO(" + WARN + ")", level.isHigherOrEqual(WARN));
 	}
 }
