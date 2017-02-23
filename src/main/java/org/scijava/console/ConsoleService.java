@@ -31,6 +31,7 @@
 
 package org.scijava.console;
 
+import java.io.PrintStream;
 import java.util.LinkedList;
 
 import org.scijava.plugin.HandlerService;
@@ -62,6 +63,12 @@ public interface ConsoleService extends
 	/** Notifies listeners of output sent to {@code stdout} or {@code stderr}. */
 	void notifyListeners(OutputEvent event);
 
+	/** Stream that writes to stdout without notifying listeners. */
+	PrintStream getSystemOutBypassListeners();
+
+	/** Stream that writes to stderr without notifying listeners. */
+	PrintStream getSystemErrBypassListeners();
+
 	// -- PTService methods --
 
 	@Override
@@ -76,4 +83,5 @@ public interface ConsoleService extends
 	default Class<LinkedList<String>> getType() {
 		return (Class) LinkedList.class;
 	}
+
 }

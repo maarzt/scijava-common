@@ -207,6 +207,36 @@ public class ConsoleServiceTest {
 		assertOutputEvent(Source.STDERR, c2InvokeErr, true, events2.get(5));
 	}
 
+	@Test
+	public void testDirectSystemOut()
+	{
+		final ThreadService threadService =
+				consoleService.context().service(ThreadService.class);
+
+		final String stdoutListened = "poc";
+		final String stderrListened = "us-";
+		final String stdoutNotListened = "abc";
+		final String stderrNotListened = "efg";
+
+		final ArrayList<OutputEvent> events = new ArrayList<>();
+		final OutputListener outputListener = new OutputTracker(events);
+
+		consoleService.addOutputListener(outputListener);
+
+		System.out.print(stdoutListened);
+		System.err.print(stderrListened);
+
+		consoleService.getSystemOutBypassListeners().println(stdoutNotListened);
+		consoleService.getSystemErrBypassListeners().println(stderrNotListened);
+
+		consoleService.removeOutputListener(outputListener);
+
+		assertEquals(2, events.size());
+
+		assertOutputEvent(Source.STDOUT, stdoutListened, false, events.get(0));
+		assertOutputEvent(Source.STDERR, stderrListened, false, events.get(1));
+	}
+
 	// -- Helper methods --
 
 	private void assertOutputEvent(final Source source, final String output,

@@ -64,6 +64,7 @@ public class DefaultConsoleService extends
 	@Parameter
 	private LogService log;
 
+	final private PrintStream originalSysOut, originalSysErr;
 	private MultiPrintStream sysout, syserr;
 	private OutputStreamReporter out, err;
 
@@ -71,6 +72,11 @@ public class DefaultConsoleService extends
 	private ArrayList<OutputListener> listeners;
 
 	private OutputListener[] cachedListeners;
+
+	public DefaultConsoleService() {
+		originalSysOut = skipMultiPrintStream(System.out);
+		originalSysErr = skipMultiPrintStream(System.err);
+	}
 
 	// -- ConsoleService methods --
 
@@ -138,6 +144,16 @@ public class DefaultConsoleService extends
 			l.outputOccurred(event);
 	}
 
+	@Override
+	public PrintStream getSystemOutBypassListeners() {
+		return originalSysOut;
+	}
+
+	@Override
+	public PrintStream getSystemErrBypassListeners() {
+		return originalSysErr;
+	}
+
 	// -- Initializable methods --
 
 	@Override
@@ -179,9 +195,21 @@ public class DefaultConsoleService extends
 		cachedListeners = listeners.toArray(new OutputListener[listeners.size()]);
 	}
 
-	private MultiPrintStream multiPrintStream(final PrintStream ps) {
+	private static MultiPrintStream multiPrintStream(final PrintStream ps) {
 		if (ps instanceof MultiPrintStream) return (MultiPrintStream) ps;
 		return new MultiPrintStream(ps);
+	}
+
+	private static PrintStream skipMultiPrintStream(final PrintStream ps) {
+		if (! (ps instanceof MultiPrintStream) )
+			return ps;
+		return printStream(((MultiPrintStream) ps).getDestination());
+	}
+
+	private static PrintStream printStream(OutputStream os) {
+		if(os instanceof PrintStream)
+			return (PrintStream) os;
+		return new PrintStream(os);
 	}
 
 	/**

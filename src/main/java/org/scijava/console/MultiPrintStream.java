@@ -41,8 +41,11 @@ import java.io.PrintStream;
  */
 public class MultiPrintStream extends PrintStream {
 
+	final private OutputStream dest;
+
 	public MultiPrintStream(final OutputStream os) {
 		super(multi(os));
+		dest = os;
 	}
 
 	// -- MultiPrintStream methods --
@@ -50,6 +53,8 @@ public class MultiPrintStream extends PrintStream {
 	public MultiOutputStream getParent() {
 		return (MultiOutputStream) out;
 	}
+
+	public OutputStream getDestination() { return dest; }
 
 	// -- Helper methods --
 
