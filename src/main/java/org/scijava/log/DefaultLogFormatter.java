@@ -8,13 +8,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -31,32 +31,27 @@
 
 package org.scijava.log;
 
-import org.scijava.Priority;
-import org.scijava.plugin.Plugin;
-import org.scijava.service.Service;
-
-import java.io.PrintStream;
+import org.scijava.Named;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 
 /**
- * Implementation of {@link LogService} using the standard error stream.
- * <p>
- * Actually, this service is somewhat misnamed now, since it prints {@code WARN}
- * and {@code ERROR} messages to stderr, but messages at lesser severities to
- * stdout.
- * </p>
- * 
- * @author Johannes Schindelin
- * @author Curtis Rueden
+ * @author Matthias Arzt
  */
-@Plugin(type = Service.class, priority = Priority.LOW_PRIORITY)
-public class StderrLogService extends AbstractLogService {
-
-	private final LogFormatter formatter = new DefaultLogFormatter();
+public class DefaultLogFormatter implements LogFormatter{
 
 	@Override
-	public void alwaysLog(final LogLevel level, final Object msg, final Throwable t) {
- 		final PrintStream out = level.isLowerOrEqual(LogLevel.WARN) ? System.err : System.out;
-		out.print(formatter.format(this, level, msg, t));
+	public String format(Named source, LogLevel level, Object msg, Throwable t) {
+		final StringWriter sw = new StringWriter();
+		final PrintWriter message = new PrintWriter(sw);
+		message.print(level.prefix());
+		final String s = source.getName();
+		if (!s.equals("default"))
+			message.append("(").append(s).append(") ");
+		message.println(msg);
+		if(t != null)
+			t.printStackTrace(message);
+		return sw.toString();
 	}
 
 }
