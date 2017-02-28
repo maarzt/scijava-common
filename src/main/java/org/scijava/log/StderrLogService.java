@@ -51,12 +51,25 @@ import java.io.PrintStream;
 @Plugin(type = Service.class, priority = Priority.LOW_PRIORITY)
 public class StderrLogService extends AbstractLogService {
 
-	private final LogFormatter formatter = new DefaultLogFormatter();
+	public StderrLogService() {
+		addAllChannelsLogListener(new PrintListener());
+	}
 
-	@Override
-	public void alwaysLog(final LogLevel level, final Object msg, final Throwable t) {
- 		final PrintStream out = level.isLowerOrEqual(LogLevel.WARN) ? System.err : System.out;
-		out.print(formatter.format(this, level, msg, t));
+	private static class PrintListener implements LogListener {
+
+		private final LogFormatter formatter = new DefaultLogFormatter();
+
+		private final Logger dummySource = new DefaultLogger(); // FIXME add "Logger source" as parameter to messageLogged
+
+		public PrintListener() {
+			dummySource.setName("default");
+		}
+
+		@Override
+		public void messageLogged(LogLevel level, Object msg, Throwable t) {
+			final PrintStream out = level.isLowerOrEqual(LogLevel.WARN) ? System.err : System.out;
+			out.print(formatter.format(dummySource, level, msg, t));
+		}
 	}
 
 }
