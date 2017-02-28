@@ -31,40 +31,14 @@
 
 package org.scijava.log;
 
-import org.scijava.service.AbstractService;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 
 /**
- * Base class for {@link LogService} implementations.
+ * Classes annotated with {@link IgnoreAsCallingClass} are ignored by
+ * {@link CallingClassUtils#getCallingClass()
  *
- * @author Johannes Schindelin
- * @author Curtis Rueden
+ * @author Matthias Arzt
  */
-@IgnoreAsCallingClass
-public abstract class AbstractLogService extends AbstractService implements
-	LogService
-{
-
-	private LogLevelStrategy logLevelStrategy = new LogLevelStrategy();
-
-	// -- Logger methods --
-
-	@Override
-	public int getLevel() {
-		return logLevelStrategy.getLevel();
-	}
-
-	@Override
-	public void setLevel(final int level) {
-		logLevelStrategy.setLevel(level);
-	}
-
-	@Override
-	public void setLevel(final String classOrPackageName, final int level) {
-		logLevelStrategy.setLevel(classOrPackageName, level);
-	}
-
-	@Override
-	public abstract void alwaysLog(final int level, final Object msg,
-		final Throwable t);
-
-}
+@Retention(RetentionPolicy.RUNTIME)
+public @interface IgnoreAsCallingClass {}
