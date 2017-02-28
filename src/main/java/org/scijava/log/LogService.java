@@ -62,6 +62,10 @@ public interface LogService extends SciJavaService, Logger {
 
 	Collection<Logger> allChannels();
 
+	void addAllChannelsLogListener(LogListener listener);
+
+	void removeAllChannelsLogListener(LogListener listener);
+
 	// -- Deprecated --
 
 	@Deprecated

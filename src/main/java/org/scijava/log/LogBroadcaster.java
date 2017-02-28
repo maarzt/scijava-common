@@ -8,13 +8,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -31,49 +31,12 @@
 
 package org.scijava.log;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.scijava.log.LogLevel.WARN;
-
-import org.junit.Test;
-
-import java.util.ArrayList;
-import java.util.List;
-
 /**
- * Tests {@link LogService}.
- * 
- * @author Johannes Schindelin
+ * @author Matthias Arzt
  */
-public class LogServiceTest {
-
-	@Test
-	public void testDefaultLevel() {
-		final LogService log = new StderrLogService();
-		LogLevel level = log.getLogLevel();
-		assertTrue("default level (" + level + //
-			") is at least INFO(" + WARN + ")", level.isHigherOrEqual(WARN));
+class LogBroadcaster extends AbstractLogGenerator implements LogListener {
+	@Override
+	public void messageLogged(LogLevel level, Object msg, Throwable t) {
+		notifyListeners(level, msg, t);
 	}
-
-	@Test
-	public void testAllChannelsListener() {
-		// setup
-		LogService logService = new AbstractLogService() { };
-		Logger loggerA = logService.channel("A");
-		Logger loggerB = logService.channel("B");
-		String messageA = "Hello World A!";
-		String messageB = "Hello World B!";
-		List<Object> messages = new ArrayList<>();
-
-		// process
-		logService.addAllChannelsLogListener((level, msg, t) -> messages.add(msg));
-		loggerA.warn(messageA);
-		loggerB.warn(messageB);
-
-		// test
-		assertEquals(2, messages.size());
-		assertEquals(messageA, messages.get(0));
-		assertEquals(messageB, messages.get(1));
-	}
-
 }

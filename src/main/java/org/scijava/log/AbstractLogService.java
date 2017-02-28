@@ -48,6 +48,7 @@ public abstract class AbstractLogService extends AbstractService implements
 
 	private final Map<String, Logger> channels = new ConcurrentHashMap<>();
 	private final Logger defaultChannel;
+	private final LogBroadcaster broadcaster = new LogBroadcaster();
 
 	// -- constructor --
 
@@ -63,6 +64,7 @@ public abstract class AbstractLogService extends AbstractService implements
 		if (channel != null) return channel;
 		final Logger newChannel = new DefaultLogger();
 		newChannel.setName(name);
+		newChannel.addLogListener(broadcaster);
 		channels.putIfAbsent(name, newChannel);
 		return channels.get(name);
 	}
@@ -70,6 +72,16 @@ public abstract class AbstractLogService extends AbstractService implements
 	@Override
 	public Collection<Logger> allChannels() {
 		return channels.values();
+	}
+
+	@Override
+	public void addAllChannelsLogListener(LogListener listener) {
+		broadcaster.addLogListener(listener);
+	}
+
+	@Override
+	public void removeAllChannelsLogListener(LogListener listener) {
+		broadcaster.removeLogListener(listener);
 	}
 
 	@Deprecated

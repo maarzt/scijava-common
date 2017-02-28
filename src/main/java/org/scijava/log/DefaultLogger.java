@@ -39,11 +39,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
  *
  * @author Curtis Rueden
  */
-public class DefaultLogger implements Logger {
+public class DefaultLogger extends AbstractLogGenerator implements Logger {
 
 	private String name;
-
-	private List<LogListener> listeners = new CopyOnWriteArrayList<>();
 
 	private LogLevelStrategy logLevelStrategy = new LogLevelStrategy();
 
@@ -67,24 +65,6 @@ public class DefaultLogger implements Logger {
 	@Override
 	public void alwaysLog(final LogLevel level, final Object msg, final Throwable t) {
 		notifyListeners(level, msg, t);
-	}
-
-	@Override
-	public void addLogListener(final LogListener l) {
-		listeners.add(Objects.requireNonNull(l));
-	}
-
-	@Override
-	public void removeLogListener(final LogListener l) {
-		listeners.remove(Objects.requireNonNull(l));
-	}
-
-	@Override
-	public void notifyListeners(final LogLevel level, final Object msg,
-		final Throwable t)
-	{
-		for (final LogListener l : listeners)
-			l.messageLogged(level, msg, t);
 	}
 
 	// -- Named methods --
