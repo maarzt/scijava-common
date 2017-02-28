@@ -50,6 +50,7 @@ import org.scijava.Named;
  * @see LogLevel
  * @see LogService
  */
+@IgnoreAsCallingClass
 public interface Logger extends Named {
 
 	default void debug(final Object msg) {

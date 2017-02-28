@@ -42,6 +42,7 @@ import org.scijava.service.AbstractService;
  *
  * @author Curtis Rueden
  */
+@IgnoreAsCallingClass
 public abstract class AbstractLogService extends AbstractService implements
 	LogService
 {

@@ -63,6 +63,35 @@ public class StderrLogServiceTest {
 		}
 	}
 
+	@Test
+	public void testLogLevelStrategy() {
+		try(RedirectSystemOut r = new RedirectSystemOut()) {
+			LogService ls = new StderrLogService();
+			MyClass myClass = new MyClass(ls);
+
+			ls.setLogLevel(MyClass.class.getName(), LogLevel.TRACE);
+			myClass.trace("Hello World!");
+			ls.setLogLevel(MyClass.class.getName(), LogLevel.NONE);
+			myClass.trace("don't show");
+
+			String stdout = r.systemOut();
+			assertTrue(stdout.contains("Hello World!"));
+			assertFalse(stdout.contains("don't show"));
+		}
+	}
+
+	class MyClass {
+		private final LogService log;
+
+		MyClass(LogService log) {
+			this.log = log;
+		}
+
+		public void trace(String s) {
+			log.trace(s);
+		}
+	}
+
 	class RedirectSystemOut implements AutoCloseable {
 
 		private final OutputStream out = new ByteArrayOutputStream();

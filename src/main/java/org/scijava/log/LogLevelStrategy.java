@@ -38,6 +38,7 @@ import java.util.Properties;
 /**
  * @author Matthias Arzt
  */
+@IgnoreAsCallingClass
 class LogLevelStrategy {
 
 	private final Map<String, LogLevel> classAndPackageLevels = new HashMap<>();
@@ -96,13 +97,7 @@ class LogLevelStrategy {
 	// -- Helper methods --
 
 	private String callingClass() {
-		final String thisClass = DefaultLogger.class.getName();
-		for (final StackTraceElement element : new Exception().getStackTrace()) {
-			final String className = element.getClassName();
-			// NB: Skip stack trace elements from other methods of this class.
-			if (!thisClass.equals(className)) return className;
-		}
-		return null;
+		return Utils.getCallingClass().getName();
 	}
 
 	private String parentPackage(final String classOrPackageName) {

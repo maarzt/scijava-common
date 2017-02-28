@@ -39,6 +39,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  *
  * @author Curtis Rueden
  */
+@IgnoreAsCallingClass
 public class DefaultLogger extends AbstractLogGenerator implements Logger {
 
 	private String name;
