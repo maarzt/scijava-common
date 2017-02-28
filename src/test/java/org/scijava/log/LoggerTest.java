@@ -59,8 +59,8 @@ public class LoggerTest {
 		final LogListener l = new LogListener() {
 
 			@Override
-			public void messageLogged(final LogLevel level, final Object msg,
-				final Throwable t)
+			public void messageLogged(final Logger source, final LogLevel level,
+				final Object msg, final Throwable t)
 			{
 				results.add(new Object[] { level, msg, t });
 			}
@@ -106,4 +106,16 @@ public class LoggerTest {
 			assertEquals(t, result[2].getClass());
 		}
 	}
+
+	@Test
+	public void testDefaultLoggerProvidesSource() {
+		Logger log = new DefaultLogger();
+		List<Logger> sources = new ArrayList<>();
+		log.addLogListener((source, level, msg, t) -> sources.add(source));
+
+		log.log(WARN, "Hello World!");
+
+		assertTrue(sources.contains(log));
+	}
+
 }

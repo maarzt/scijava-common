@@ -63,17 +63,22 @@ public class LogServiceTest {
 		Logger loggerB = logService.channel("B");
 		String messageA = "Hello World A!";
 		String messageB = "Hello World B!";
-		List<Object> messages = new ArrayList<>();
+		List<Object[]> results = new ArrayList<>();
 
 		// process
-		logService.addAllChannelsLogListener((level, msg, t) -> messages.add(msg));
+		logService.addAllChannelsLogListener((source, level, msg, t) -> results.add(new Object[] {source, msg}));
 		loggerA.warn(messageA);
 		loggerB.warn(messageB);
 
 		// test
-		assertEquals(2, messages.size());
-		assertEquals(messageA, messages.get(0));
-		assertEquals(messageB, messages.get(1));
+		assertEquals(2, results.size());
+		assertLogged(loggerA, messageA, results.get(0));
+		assertLogged(loggerB, messageB, results.get(1));
+	}
+
+	private void assertLogged(Logger source, String message, Object[] actual) {
+		assertEquals(source, actual[0]);
+		assertEquals(message, actual[1]);
 	}
 
 }

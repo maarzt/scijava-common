@@ -50,11 +50,11 @@ class AbstractLogGenerator {
 		listeners.remove(Objects.requireNonNull(l));
 	}
 
-	public void notifyListeners(final LogLevel level, final Object msg,
-								final Throwable t)
+	public void notifyListeners(final Logger source, final LogLevel level,
+		final Object msg, final Throwable t)
 	{
 		for (final LogListener l : listeners)
-			l.messageLogged(level, msg, t);
+			l.messageLogged(source, level, msg, t);
 	}
 
 }

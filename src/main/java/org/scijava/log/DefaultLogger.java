@@ -64,7 +64,7 @@ public class DefaultLogger extends AbstractLogGenerator implements Logger {
 
 	@Override
 	public void alwaysLog(final LogLevel level, final Object msg, final Throwable t) {
-		notifyListeners(level, msg, t);
+		notifyListeners(this, level, msg, t);
 	}
 
 	// -- Named methods --

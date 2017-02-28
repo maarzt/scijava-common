@@ -199,5 +199,5 @@ public interface Logger extends Named {
 	void removeLogListener(LogListener l);
 
 	/** Notifies listeners of a logging event. */
-	void notifyListeners(LogLevel level, Object msg, Throwable t);
+	void notifyListeners(Logger source, LogLevel level, Object msg, Throwable t);
 }

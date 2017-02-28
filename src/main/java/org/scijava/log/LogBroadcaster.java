@@ -36,7 +36,9 @@ package org.scijava.log;
  */
 class LogBroadcaster extends AbstractLogGenerator implements LogListener {
 	@Override
-	public void messageLogged(LogLevel level, Object msg, Throwable t) {
-		notifyListeners(level, msg, t);
+	public void messageLogged(final Logger source, final LogLevel level,
+		final Object msg, final Throwable t)
+	{
+		notifyListeners(source, level, msg, t);
 	}
 }

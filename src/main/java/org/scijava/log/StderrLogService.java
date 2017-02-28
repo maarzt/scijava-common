@@ -59,16 +59,12 @@ public class StderrLogService extends AbstractLogService {
 
 		private final LogFormatter formatter = new DefaultLogFormatter();
 
-		private final Logger dummySource = new DefaultLogger(); // FIXME add "Logger source" as parameter to messageLogged
-
-		public PrintListener() {
-			dummySource.setName("default");
-		}
-
 		@Override
-		public void messageLogged(LogLevel level, Object msg, Throwable t) {
+		public void messageLogged(final Logger source, final LogLevel level,
+			final Object msg, final Throwable t)
+		{
 			final PrintStream out = level.isLowerOrEqual(LogLevel.WARN) ? System.err : System.out;
-			out.print(formatter.format(dummySource, level, msg, t));
+			out.print(formatter.format(source, level, msg, t));
 		}
 	}
 
