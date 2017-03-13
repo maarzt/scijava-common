@@ -8,13 +8,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -32,14 +32,46 @@
 package org.scijava.log;
 
 /**
- * Listener for logging activity.
- *
- * @author Curtis Rueden
- * @see LogService
- * @see Logger
+ * @author Matthias Arzt
  */
-public interface LogListener {
+public class LogMessage {
 
-	/** Method called when a message is logged. */
-	void messageLogged(LogMessage event);
+	private final Logger source;
+
+	private final LogLevel level;
+
+	private final String message;
+
+	private final Throwable throwable;
+
+	public LogMessage(Logger source, LogLevel level, Object message, Throwable throwable) {
+		this.source = source;
+		this.level = level;
+		this.message = message == null ? null : message.toString();
+		this.throwable = throwable;
+	}
+
+	public LogMessage(Logger source, LogLevel level, Object msg) {
+		this(source, level, msg, null);
+	}
+
+	public Logger source() {
+		return source;
+	}
+
+	public LogLevel level() {
+		return level;
+	}
+
+	public String text() {
+		return message;
+	}
+
+	public Throwable throwable() {
+		return throwable;
+	}
+
+	public String toString() {
+		return "LogEvent{" + source + ", " + level + ", " + message + ", " + throwable + "}";
+	}
 }

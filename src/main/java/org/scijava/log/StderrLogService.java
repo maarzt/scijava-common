@@ -60,11 +60,10 @@ public class StderrLogService extends AbstractLogService {
 		private final LogFormatter formatter = new DefaultLogFormatter();
 
 		@Override
-		public void messageLogged(final Logger source, final LogLevel level,
-			final Object msg, final Throwable t)
+		public void messageLogged(final LogMessage message)
 		{
-			final PrintStream out = level.isLowerOrEqual(LogLevel.WARN) ? System.err : System.out;
-			out.print(formatter.format(source, level, msg, t));
+			final PrintStream out = message.level().isLowerOrEqual(LogLevel.WARN) ? System.err : System.out;
+			out.print(formatter.format(message));
 		}
 	}
 

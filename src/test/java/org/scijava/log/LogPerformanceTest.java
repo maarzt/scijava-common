@@ -13,8 +13,8 @@ public class LogPerformanceTest {
 	@Test
 	public void messureLogSpeed() {
 		List<Class> classes = new ArrayList<>(20000);
-		LogListener listener = (source, level, msg, t) -> classes.add(Object.class);
-		LogListener callingClassListener = (source, level, msg, t) -> classes.add(Utils.getCallingClass());
+		LogListener listener = msg -> classes.add(Object.class);
+		LogListener callingClassListener = msg -> classes.add(Utils.getCallingClass());
 		measureTimeForNLogMessages("without calling class", 10000, listener);
 		measureTimeForNLogMessages("with calling class", 10000,  callingClassListener);
 	}

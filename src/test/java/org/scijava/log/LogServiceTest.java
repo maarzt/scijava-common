@@ -66,7 +66,7 @@ public class LogServiceTest {
 		List<Object[]> results = new ArrayList<>();
 
 		// process
-		logService.addAllChannelsLogListener((source, level, msg, t) -> results.add(new Object[] {source, msg}));
+		logService.addAllChannelsLogListener(msg -> results.add(new Object[] {msg.source(), msg.text()}));
 		loggerA.warn(messageA);
 		loggerB.warn(messageB);
 

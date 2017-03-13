@@ -31,13 +31,10 @@
 
 package org.scijava.log;
 
-import org.scijava.Named;
-
 /**
  * @author Matthias Arzt
  */
 public interface LogFormatter {
 
-	String format(Named source, LogLevel level, Object msg, Throwable t);
-
+	String format(LogMessage message);
 }

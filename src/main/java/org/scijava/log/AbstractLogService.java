@@ -138,10 +138,9 @@ public abstract class AbstractLogService extends AbstractService implements
 	}
 
 	@Override
-	public void notifyListeners(final Logger source, final LogLevel level,
-		final Object msg, final Throwable t)
+	public void notifyListeners(final LogMessage message)
 	{
-		defaultChannel.notifyListeners(source, level, msg, t);
+		defaultChannel.notifyListeners(message);
 	}
 
 	// -- Named methods --

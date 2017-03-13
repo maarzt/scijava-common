@@ -31,7 +31,6 @@
 
 package org.scijava.log;
 
-import org.scijava.Named;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
@@ -41,16 +40,16 @@ import java.io.StringWriter;
 public class DefaultLogFormatter implements LogFormatter{
 
 	@Override
-	public String format(Named source, LogLevel level, Object msg, Throwable t) {
+	public String format(LogMessage message) {
 		final StringWriter sw = new StringWriter();
-		final PrintWriter message = new PrintWriter(sw);
-		message.print(level.prefix());
-		final String s = source.getName();
+		final PrintWriter printer = new PrintWriter(sw);
+		printer.print(message.level().prefix());
+		final String s = message.source().getName();
 		if (!s.equals("default"))
-			message.append("(").append(s).append(") ");
-		message.println(msg);
-		if(t != null)
-			t.printStackTrace(message);
+			printer.append("(").append(s).append(") ");
+		printer.println(message.text());
+		if(message.throwable() != null)
+			message.throwable().printStackTrace(printer);
 		return sw.toString();
 	}
 

@@ -55,14 +55,13 @@ public class LoggerTest {
 	@Test
 	public void testLogListeners() {
 		final Logger log = new StderrLogService().channel("test");
-		final List<Object[]> results = new ArrayList<>();
+		final List<LogMessage> results = new ArrayList<>();
 		final LogListener l = new LogListener() {
 
 			@Override
-			public void messageLogged(final Logger source, final LogLevel level,
-				final Object msg, final Throwable t)
+			public void messageLogged(final LogMessage message)
 			{
-				results.add(new Object[] { level, msg, t });
+				results.add(message);
 			}
 		};
 		log.addLogListener(l);
@@ -96,14 +95,14 @@ public class LoggerTest {
 	// -- Helper methods --
 
 	private void assertLogged(final LogLevel level, final String msg,
-		final Class<? extends Throwable> t, final Object[] result)
+		final Class<? extends Throwable> t, final LogMessage message)
 	{
-		assertEquals(level, result[0]);
-		assertEquals(msg, result[1]);
-		if (t == null) assertNull(result[2]);
+		assertEquals(level, message.level());
+		assertEquals(msg, message.text());
+		if (t == null) assertNull(message.throwable());
 		else {
-			assertNotNull(result[2]);
-			assertEquals(t, result[2].getClass());
+			assertNotNull(message.throwable());
+			assertEquals(t, message.throwable().getClass());
 		}
 	}
 
@@ -111,7 +110,7 @@ public class LoggerTest {
 	public void testDefaultLoggerProvidesSource() {
 		Logger log = new DefaultLogger();
 		List<Logger> sources = new ArrayList<>();
-		log.addLogListener((source, level, msg, t) -> sources.add(source));
+		log.addLogListener(message -> sources.add(message.source()));
 
 		log.log(WARN, "Hello World!");
 

@@ -33,7 +33,6 @@ package org.scijava.log;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.scijava.Named;
 
 /**
  * @author Matthias Arzt
@@ -46,32 +45,32 @@ public class DefaultLogFormatterTest {
 	public void testFormatMessage() {
 		String nameOfThisMethod = "testFormatMessage";
 		// setup
-		Named source = new NamedObject("source");
-		LogLevel level = LogLevel.DEBUG;
-		Integer msg = 42;
-		Throwable t = generateThrowableWithStackTrace();
+		Logger logger = new DefaultLogger();
+		logger.setName("source");
+		LogMessage message = new LogMessage(logger, LogLevel.DEBUG, 42, generateThrowableWithStackTrace());
 		// process
-		String s = logFormatter.format(source, level, msg, t);
+		String s = logFormatter.format(message);
 		//test
-		Assert.assertTrue("Log message contains source", s.contains(source.getName()));
-		Assert.assertTrue("Log message contains level", s.contains(level.toString()));
-		Assert.assertTrue("Log message contains msg", s.contains(msg.toString()));
-		Assert.assertTrue("Log message contains throwable", s.contains(t.toString()));
+		Assert.assertTrue("Log message contains source", s.contains(logger.getName()));
+		Assert.assertTrue("Log message contains level", s.contains(message.level().toString()));
+		Assert.assertTrue("Log message contains msg", s.contains(message.text()));
+		Assert.assertTrue("Log message contains throwable", s.contains(message.throwable().toString()));
 		Assert.assertTrue("Log message contains stack trace", s.contains(nameOfThisMethod));
 	}
 
 	@Test
 	public void testFormatMessageOptionalParameters() {
 		// setup
-		Named source = new NamedObject("source");
-		LogLevel level = LogLevel.DEBUG;
+		Logger logger = new DefaultLogger();
+		logger.setName("source");
+		LogMessage message = new LogMessage(logger, LogLevel.WARN, null, null);
 
 		// process
 		// Can it still format the message if optional parameters are null?
-		String s = logFormatter.format(source, level, null, null);
+		String s = logFormatter.format(message);
 
 		// test
-		Assert.assertTrue("Log message contains level", s.contains(level.toString()));
+		Assert.assertTrue("Log message contains level", s.contains(message.level().toString()));
 	}
 
 	// -- Helper methods --
@@ -86,22 +85,4 @@ public class DefaultLogFormatterTest {
 		return t;
 	}
 
-	class NamedObject implements Named {
-
-		final String name;
-
-		NamedObject(String name) {
-			this.name = name;
-		}
-
-		@Override
-		public String getName() {
-			return name;
-		}
-
-		@Override
-		public void setName(String name) {
-			throw new UnsupportedOperationException();
-		}
-	}
 }
