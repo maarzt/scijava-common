@@ -31,64 +31,22 @@
 
 package org.scijava.log;
 
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
-
-import org.scijava.service.AbstractService;
-
 /**
- * Base class for {@link LogService} implementations.
+ * Interface for loggers, that provides a callback mechanism for listening to
+ * the generated logs.
  *
- * @author Johannes Schindelin
- * @author Curtis Rueden
+ * @author Matthias Arzt
  */
-@IgnoreAsCallingClass
-public abstract class AbstractLogService extends AbstractService implements
-	LogService
-{
+public interface ListenableLogger extends Logger {
 
-	private final LogLevelStrategy logLevelStrategy = new LogLevelStrategy();
+	/**
+	 * {@link LogListener}s added with this method are notified of every message,
+	 * NB: Messages are only logged, if their level is lower than the logger's
+	 * level.
+	 *
+	 * @param listener
+	 */
+	void addListener(LogListener listener);
 
-	private final List<LogListener> listeners = new CopyOnWriteArrayList<>();
-
-	// -- ListenableLogger methods --
-
-	@Override
-	public void addListener(final LogListener listener) {
-		listeners.add(listener);
-	}
-
-	@Override
-	public void removeListener(final LogListener listener) {
-		listeners.remove(listener);
-	}
-
-	// -- Logger methods --
-
-	@Override
-	public int getLevel() {
-		return logLevelStrategy.getLevel();
-	}
-
-	@Override
-	public void setLevel(final int level) {
-		logLevelStrategy.setLevel(level);
-	}
-
-	@Override
-	public void setLevel(final String classOrPackageName, final int level) {
-		logLevelStrategy.setLevel(classOrPackageName, level);
-	}
-
-	@Override
-	public void alwaysLog(final int level, final Object msg, final Throwable t) {
-		messageLogged(new LogMessage(level, msg, t));
-	}
-
-	// -- Helper methods --
-
-	protected void messageLogged(LogMessage message) {
-		for (LogListener listener : listeners)
-			listener.messageLogged(message);
-	}
+	void removeListener(LogListener listener);
 }

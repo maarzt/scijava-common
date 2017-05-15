@@ -44,7 +44,7 @@ import org.scijava.service.SciJavaService;
  * 
  * @author Curtis Rueden
  */
-public interface LogService extends SciJavaService, Logger {
+public interface LogService extends SciJavaService, ListenableLogger {
 
 	/** System property to set for overriding the default logging level. */
 	String LOG_LEVEL_PROPERTY = "scijava.log.level";

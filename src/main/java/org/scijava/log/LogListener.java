@@ -31,64 +31,19 @@
 
 package org.scijava.log;
 
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
-
-import org.scijava.service.AbstractService;
-
 /**
- * Base class for {@link LogService} implementations.
+ * Callback function used by {@link ListenableLogger}.
  *
- * @author Johannes Schindelin
- * @author Curtis Rueden
+ * @author Matthias Arzt
+ * @see ListenableLogger
+ * @see LogMessage
  */
-@IgnoreAsCallingClass
-public abstract class AbstractLogService extends AbstractService implements
-	LogService
-{
+public interface LogListener {
 
-	private final LogLevelStrategy logLevelStrategy = new LogLevelStrategy();
+	/**
+	 * This method is normally called from many threads in parallel. It must be
+	 * implemented highly thread safe and must not use any kind of locks.
+	 */
+	void messageLogged(LogMessage message);
 
-	private final List<LogListener> listeners = new CopyOnWriteArrayList<>();
-
-	// -- ListenableLogger methods --
-
-	@Override
-	public void addListener(final LogListener listener) {
-		listeners.add(listener);
-	}
-
-	@Override
-	public void removeListener(final LogListener listener) {
-		listeners.remove(listener);
-	}
-
-	// -- Logger methods --
-
-	@Override
-	public int getLevel() {
-		return logLevelStrategy.getLevel();
-	}
-
-	@Override
-	public void setLevel(final int level) {
-		logLevelStrategy.setLevel(level);
-	}
-
-	@Override
-	public void setLevel(final String classOrPackageName, final int level) {
-		logLevelStrategy.setLevel(classOrPackageName, level);
-	}
-
-	@Override
-	public void alwaysLog(final int level, final Object msg, final Throwable t) {
-		messageLogged(new LogMessage(level, msg, t));
-	}
-
-	// -- Helper methods --
-
-	protected void messageLogged(LogMessage message) {
-		for (LogListener listener : listeners)
-			listener.messageLogged(message);
-	}
 }
