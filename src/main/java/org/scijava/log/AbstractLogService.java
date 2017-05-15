@@ -31,10 +31,6 @@
 
 package org.scijava.log;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
-
 import org.scijava.service.AbstractService;
 
 /**
@@ -48,62 +44,23 @@ public abstract class AbstractLogService extends AbstractService implements
 	LogService
 {
 
-	private int currentLevel = levelFromEnvironment();
-
-	private final Map<String, Integer> classAndPackageLevels =
-		new HashMap<>();
-
-	// -- constructor --
-
-	public AbstractLogService() {
-		// check SciJava log level system properties for initial logging levels
-
-		// global log level property
-		final String logProp = System.getProperty(LOG_LEVEL_PROPERTY);
-		final int level = LogLevel.value(logProp);
-		if (level >= 0) setLevel(level);
-
-		if (getLevel() == 0)
-			setLevel(levelFromEnvironment());
-
-		// populate custom class- and package-specific log level properties
-		final String logLevelPrefix = LOG_LEVEL_PROPERTY + ":";
-		final Properties props = System.getProperties();
-		for (final Object propKey : props.keySet()) {
-			if (!(propKey instanceof String)) continue;
-			final String propName = (String) propKey;
-			if (!propName.startsWith(logLevelPrefix)) continue;
-			final String classOrPackageName =
-				propName.substring(logLevelPrefix.length());
-			setLevel(classOrPackageName, LogLevel.value(props.getProperty(propName)));
-		}
-	}
+	private LogLevelStrategy logLevelStrategy = new LogLevelStrategy();
 
 	// -- Logger methods --
 
 	@Override
 	public int getLevel() {
-		if (!classAndPackageLevels.isEmpty()) {
-			// check for a custom log level for calling class or its parent packages
-			String classOrPackageName = CallingClassUtils.getCallingClass().getName();
-			while (classOrPackageName != null) {
-				final Integer level = classAndPackageLevels.get(classOrPackageName);
-				if (level != null) return level;
-				classOrPackageName = parentPackage(classOrPackageName);
-			}
-		}
-		// no custom log level; return the global log level
-		return currentLevel;
+		return logLevelStrategy.getLevel();
 	}
 
 	@Override
 	public void setLevel(final int level) {
-		currentLevel = level;
+		logLevelStrategy.setLevel(level);
 	}
 
 	@Override
 	public void setLevel(final String classOrPackageName, final int level) {
-		classAndPackageLevels.put(classOrPackageName, level);
+		logLevelStrategy.setLevel(classOrPackageName, level);
 	}
 
 	// -- Deprecated --
@@ -113,18 +70,4 @@ public abstract class AbstractLogService extends AbstractService implements
 	protected String getPrefix(final int level) {
 		return "[" + LogLevel.prefix(level) + "]";
 	}
-
-	// -- Helper methods --
-
-	private String parentPackage(final String classOrPackageName) {
-		final int dot = classOrPackageName.lastIndexOf(".");
-		if (dot < 0) return null;
-		return classOrPackageName.substring(0, dot);
-	}
-
-	private int levelFromEnvironment() {
-		// use the default, which is INFO unless the DEBUG env. variable is set
-		return System.getenv("DEBUG") == null ? LogLevel.INFO : LogLevel.DEBUG;
-	}
-
 }
