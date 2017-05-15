@@ -31,6 +31,9 @@
 
 package org.scijava.log;
 
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+
 import org.scijava.service.AbstractService;
 
 /**
@@ -44,7 +47,9 @@ public abstract class AbstractLogService extends AbstractService implements
 	LogService
 {
 
-	private LogLevelStrategy logLevelStrategy = new LogLevelStrategy();
+	private final LogLevelStrategy logLevelStrategy = new LogLevelStrategy();
+
+	private final List<LogListener> listeners = new CopyOnWriteArrayList<>();
 
 	// -- Logger methods --
 
@@ -63,11 +68,33 @@ public abstract class AbstractLogService extends AbstractService implements
 		logLevelStrategy.setLevel(classOrPackageName, level);
 	}
 
+	@Override
+	public void alwaysLog(final int level, final Object msg, final Throwable t) {
+		messageLogged(new LogMessage(level, msg, t));
+	}
+
+	@Override
+	public void addListener(final LogListener listener) {
+		listeners.add(listener);
+	}
+
+	@Override
+	public void removeListener(final LogListener listener) {
+		listeners.remove(listener);
+	}
+
 	// -- Deprecated --
 
 	/** @deprecated Use {@link LogLevel#prefix(int)} instead. */
 	@Deprecated
 	protected String getPrefix(final int level) {
 		return "[" + LogLevel.prefix(level) + "]";
+	}
+
+	// -- Helper methods --
+
+	protected void messageLogged(LogMessage message) {
+		for (LogListener listener : listeners)
+			listener.messageLogged(message);
 	}
 }
