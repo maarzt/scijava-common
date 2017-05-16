@@ -150,9 +150,9 @@ public class AbstractLogServiceTest {
 		}
 
 		@Override
-		public void alwaysLog(int level, Object msg, Throwable t) {
-			this.message = LogLevel.prefix(level) + msg;
-			this.exception = t;
+		void messageLogged(LogMessage message) {
+			this.message = message.toString();
+			this.exception = message.throwable();
 		}
 	}
 }

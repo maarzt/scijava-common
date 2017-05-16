@@ -8,13 +8,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -31,91 +31,52 @@
 
 package org.scijava.log;
 
-import org.scijava.service.AbstractService;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
- * Base class for {@link LogService} implementations.
+ * Default implementation for {@link Logger}.
  *
- * @author Johannes Schindelin
- * @author Curtis Rueden
  * @author Matthias Arzt
  */
 @IgnoreAsCallingClass
-public abstract class AbstractLogService extends AbstractService implements
-	LogService
-{
+class DefaultLogger implements Logger {
 
-	private final Logger rootLogger;
+	private final int level;
 
-	private final LogLevelStrategy logLevelStrategy = new LogLevelStrategy();
+	private final List<LogListener> listeners = new CopyOnWriteArrayList<>();
 
-	// -- constructor --
-
-	public AbstractLogService() {
-		rootLogger = new RootLogger();
+	public DefaultLogger(final int level)
+	{
+		this.level = level;
 	}
 
-	// -- AbstractLogService methods --
+	// -- DefaultLogger methods --
 
-	abstract void messageLogged(LogMessage message);
+	protected void messageLogged(final LogMessage message) {
+		for (LogListener listener : listeners)
+			listener.messageLogged(message);
+	}
 
 	// -- Logger methods --
 
 	@Override
 	public int getLevel() {
-		return logLevelStrategy.getLevel();
-	}
-
-	@Override
-	public void setLevel(final int level) {
-		logLevelStrategy.setLevel(level);
-	}
-
-	@Override
-	public void setLevel(final String classOrPackageName, final int level) {
-		logLevelStrategy.setLevel(classOrPackageName, level);
+		return level;
 	}
 
 	@Override
 	public void alwaysLog(final int level, final Object msg, final Throwable t) {
-		rootLogger.alwaysLog(level, msg, t);
+		messageLogged(new LogMessage(level, msg, t));
 	}
 
 	@Override
 	public void addListener(final LogListener listener) {
-		rootLogger.addListener(listener);
+		listeners.add(listener);
 	}
 
 	@Override
 	public void removeListener(final LogListener listener) {
-		rootLogger.removeListener(listener);
-	}
-
-	// -- Deprecated --
-
-	/** @deprecated Use {@link LogLevel#prefix(int)} instead. */
-	@Deprecated
-	protected String getPrefix(final int level) {
-		return "[" + LogLevel.prefix(level) + "]";
-	}
-
-	// -- Helper classes --
-
-	@IgnoreAsCallingClass
-	private class RootLogger extends DefaultLogger
-	{
-		public RootLogger() {
-			super(LogLevel.NONE);
-		}
-
-		@Override
-		public int getLevel() {
-			return logLevelStrategy.getLevel();
-		}
-
-		@Override
-		protected void messageLogged(LogMessage message) {
-			AbstractLogService.this.messageLogged(message);
-		}
+		listeners.remove(listener);
 	}
 }

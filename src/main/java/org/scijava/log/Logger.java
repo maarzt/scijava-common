@@ -31,6 +31,8 @@
 
 package org.scijava.log;
 
+import java.util.function.Predicate;
+
 import static org.scijava.log.LogLevel.DEBUG;
 import static org.scijava.log.LogLevel.ERROR;
 import static org.scijava.log.LogLevel.INFO;
