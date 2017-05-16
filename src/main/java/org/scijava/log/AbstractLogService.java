@@ -31,9 +31,6 @@
 
 package org.scijava.log;
 
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
-
 import org.scijava.service.AbstractService;
 
 /**
@@ -41,26 +38,50 @@ import org.scijava.service.AbstractService;
  *
  * @author Johannes Schindelin
  * @author Curtis Rueden
+ * @author Matthias Arzt
  */
 @IgnoreAsCallingClass
 public abstract class AbstractLogService extends AbstractService implements
 	LogService
 {
 
+	private final ListenableLogger logger;
+
 	private final LogLevelStrategy logLevelStrategy = new LogLevelStrategy();
 
-	private final List<LogListener> listeners = new CopyOnWriteArrayList<>();
+	// -- constructor --
 
-	// -- ListenableLogger methods --
+	public AbstractLogService() {
+		logger = new DefaultListenableLogger(LogLevel.NONE) {
+
+			@Override
+			public int getLevel() {
+				return logLevelStrategy.getLevel();
+			}
+
+			@Override
+			protected void messageLogged(LogMessage message) {
+				super.messageLogged(message);
+				AbstractLogService.this.messageLogged(message);
+			}
+
+		};
+	}
+
+	// -- AbstractLogService methods --
+
+	abstract void messageLogged(LogMessage message);
+
+	// -- Logger methods --
 
 	@Override
-	public void addListener(final LogListener listener) {
-		listeners.add(listener);
+	public void addListener(LogListener listener) {
+		logger.addListener(listener);
 	}
 
 	@Override
-	public void removeListener(final LogListener listener) {
-		listeners.remove(listener);
+	public void removeListener(LogListener listener) {
+		logger.removeListener(listener);
 	}
 
 	// -- Logger methods --
@@ -76,19 +97,12 @@ public abstract class AbstractLogService extends AbstractService implements
 	}
 
 	@Override
-	public void setLevel(final String classOrPackageName, final int level) {
+	public void setLevel(String classOrPackageName, final int level) {
 		logLevelStrategy.setLevel(classOrPackageName, level);
 	}
 
 	@Override
 	public void alwaysLog(final int level, final Object msg, final Throwable t) {
-		messageLogged(new LogMessage(level, msg, t));
-	}
-
-	// -- Helper methods --
-
-	protected void messageLogged(LogMessage message) {
-		for (LogListener listener : listeners)
-			listener.messageLogged(message);
+		logger.alwaysLog(level, msg, t);
 	}
 }
