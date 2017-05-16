@@ -44,25 +44,25 @@ class DefaultLogger implements Logger, LogListener {
 
 	private final LogListener destination;
 
-	private final String name;
+	private LogSource source;
 
 	private final int level;
 
 	private final List<LogListener> listeners = new CopyOnWriteArrayList<>();
 
-	public DefaultLogger(final LogListener destination, final String name,
-								   final int level)
+	public DefaultLogger(final LogListener destination,
+		final LogSource source, final int level)
 	{
 		this.destination = destination;
-		this.name = name;
+		this.source = source;
 		this.level = level;
 	}
 
 	// -- Logger methods --
 
 	@Override
-	public String getName() {
-		return name;
+	public LogSource getSource() {
+		return source;
 	}
 
 	@Override
@@ -72,7 +72,7 @@ class DefaultLogger implements Logger, LogListener {
 
 	@Override
 	public void alwaysLog(final int level, final Object msg, final Throwable t) {
-		messageLogged(new LogMessage(level, msg, t));
+		messageLogged(new LogMessage(source, level, msg, t));
 	}
 
 	@Override
@@ -87,7 +87,7 @@ class DefaultLogger implements Logger, LogListener {
 
 	@Override
 	public Logger subLogger(final String name, final int level) {
-		return new DefaultLogger(this, name, level);
+		return new DefaultLogger(this, source.subSource(name), level);
 	}
 
 	// -- LogListener methods --

@@ -31,41 +31,59 @@
 
 package org.scijava.log;
 
-import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
+import static org.junit.Assert.*;
+
 /**
- * Tests {@link LogMessage}.
- * 
- * @author Matthias Arzt
+ * Tests {@link LogSource}
  */
-public class LogMessageTest {
+public class LogSourceTest {
 
-	/** Tests {@link LogMessage#toString()}. */
 	@Test
-	public void testToString() {
-		String nameOfThisMethod = "testToString";
-		// setup
-		LogMessage message = new LogMessage(LogSource.root(), LogLevel.DEBUG, 42, new NullPointerException());
-		// process
-		String s = message.toString();
-		//test
-		Assert.assertTrue("Log message contains level", s.contains(LogLevel.prefix(message.level())));
-		Assert.assertTrue("Log message contains msg", s.contains(message.text()));
-		Assert.assertTrue("Log message contains throwable", s.contains(message.throwable().toString()));
-		Assert.assertTrue("Log message contains stack trace", s.contains(nameOfThisMethod));
+	public void testRoot() {
+		LogSource root = LogSource.root();
+		assertEquals(Collections.emptyList(), root.path());
+		assertEquals("", root.name());
+		assertTrue(root.isRoot());
 	}
 
 	@Test
-	public void testToStringOptionalParameters() {
-		// setup
-		LogMessage message = new LogMessage(LogSource.root(), LogLevel.WARN, null, null);
-
-		// process
-		// Can it still format the message if optional parameters are null?
-		String s = message.toString();
-
-		// test
-		Assert.assertTrue("Log message contains level", s.contains(LogLevel.prefix(message.level())));
+	public void testRootIsUnique() {
+		LogSource a = LogSource.root();
+		LogSource b = LogSource.root();
+		assertSame(a, b);
 	}
+
+	@Test
+	public void testChildIsUnique() {
+		String name = "foo";
+		LogSource root = LogSource.root();
+		LogSource a = root.subSource(name);
+		LogSource b = root.subSource(name);
+		assertSame(a, b);
+	}
+
+	@Test
+	public void testOfIsUnique() {
+		List<String> path = Arrays.asList("foo", "bar");
+		LogSource a = LogSource.of(path);
+		LogSource b = LogSource.of(path);
+		assertSame(a, b);
+	}
+
+	@Test
+	public void testOf() {
+		List<String> path = Arrays.asList("foo", "bar");
+		LogSource source = LogSource.of(path);
+		assertEquals(path, source.path());
+		assertEquals("bar", source.name());
+		assertFalse(source.isRoot());
+		assertEquals("foo:bar", source.toString());
+	}
+
 }
