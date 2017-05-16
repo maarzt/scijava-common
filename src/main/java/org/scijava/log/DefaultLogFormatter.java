@@ -47,6 +47,7 @@ public class DefaultLogFormatter implements LogFormatter {
 		final PrintWriter printer = new PrintWriter(sw);
 		printWithBrackets(printer, message.time().toString());
 		printWithBrackets(printer, LogLevel.prefix(message.level()));
+		printWithBrackets(printer, message.source().toString());
 		printer.println(message.text());
 		if (message.throwable() != null) message.throwable().printStackTrace(
 			printer);
