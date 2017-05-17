@@ -64,7 +64,12 @@ public abstract class AbstractLogService extends AbstractService implements
 
 	@Override
 	public void setLevel(final String classOrPackageName, final int level) {
-		logLevelStrategy.setLevel(classOrPackageName, level);
+		logLevelStrategy.setLevelForClass(classOrPackageName, level);
+	}
+
+	@Override
+	public void setLevelForLogger(final LogSource source, final int level) {
+		logLevelStrategy.setLevelForLogger(source, level);
 	}
 
 	abstract void messageLogged(LogMessage message);
@@ -136,7 +141,8 @@ public abstract class AbstractLogService extends AbstractService implements
 		@Override
 		public Logger subLogger(String name, int level) {
 			LogSource source = getSource().subSource(name);
-			return new DefaultLogger(this, source, level);
+			int actualLevel = logLevelStrategy.getLevelForLogger(source, level);
+			return new DefaultLogger(this, source, actualLevel);
 		}
 	}
 }
