@@ -33,29 +33,66 @@ package org.scijava.console;
 
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.util.function.Consumer;
 
 /**
- * A {@link PrintStream} that wraps a {@link MultiOutputStream}.
+ * ListenableSystemStream allow listening to System.out and System.err
  *
- * @author Curtis Rueden
+ * @author Matthais Arzt
  */
-public class MultiPrintStream extends PrintStream {
+class ListenableSystemStreams {
 
-	public MultiPrintStream(final OutputStream os) {
-		super(multi(os));
+	private ListenableSystemStreams() {
+		// prevent from being initialized
 	}
 
-	// -- MultiPrintStream methods --
+	private static final ListenableStream out = new ListenableStream(System.out, System::setOut);
 
-	public MultiOutputStream getParent() {
-		return (MultiOutputStream) out;
+	private static final ListenableStream err = new ListenableStream(System.err, System::setErr);
+
+	public static ListenableStream out() {
+		return out;
 	}
 
-	// -- Helper methods --
+	public static ListenableStream err() {
+		return err;
+	}
 
-	private static OutputStream multi(final OutputStream os) {
-		if (os instanceof MultiOutputStream) return os;
-		return new MultiOutputStream(os);
+	public static class ListenableStream {
+
+		private final OutputStream out;
+		private PrintStream in;
+		private final MultiOutputStream multi;
+		private final Consumer<PrintStream> streamSetter;
+		private boolean initialized = false;
+
+		private ListenableStream(OutputStream os, Consumer<PrintStream> streamSetter) {
+			this.out = os;
+			this.multi = new MultiOutputStream(os);
+			this.in = new PrintStream(multi);
+			this.streamSetter = streamSetter;
+		}
+
+		public void addListener(OutputStream os) {
+			init();
+			multi.addOutputStream(os);
+		}
+
+		public void removeListener(OutputStream os) {
+			multi.removeOutputStream(os);
+		}
+
+		public OutputStream bypass() {
+			return out;
+		}
+
+		private void init() {
+			if(initialized) return;
+			initialized = true;
+			// No synchronization is needed. Even if init is called in parallel,
+			// and streamSetter happens to be called twice. It will only set the same value twice.
+			streamSetter.accept(in);
+		}
 	}
 
 }

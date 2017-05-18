@@ -65,7 +65,6 @@ public class DefaultConsoleService extends
 	@Parameter
 	private LogService log;
 
-	private MultiPrintStream sysout, syserr;
 	private OutputStreamReporter out, err;
 
 	/** List of listeners for {@code stdout} and {@code stderr} output. */
@@ -134,8 +133,8 @@ public class DefaultConsoleService extends
 
 	@Override
 	public void dispose() {
-		if (out != null) sysout.getParent().removeOutputStream(out);
-		if (err != null) syserr.getParent().removeOutputStream(err);
+		ListenableSystemStreams.out().removeListener(out);
+		ListenableSystemStreams.err().removeListener(err);
 	}
 
 	// -- Helper methods - lazy initialization --
@@ -144,25 +143,15 @@ public class DefaultConsoleService extends
 	private synchronized void initListeners() {
 		if (listeners != null) return; // already initialized
 
-		sysout = multiPrintStream(System.out);
-		if (System.out != sysout) System.setOut(sysout);
 		out = new OutputStreamReporter(Source.STDOUT);
-		sysout.getParent().addOutputStream(out);
-
-		syserr = multiPrintStream(System.err);
-		if (System.err != syserr) System.setErr(syserr);
+		ListenableSystemStreams.out().addListener(out);
 		err = new OutputStreamReporter(Source.STDERR);
-		syserr.getParent().addOutputStream(err);
+		ListenableSystemStreams.err().addListener(err);
 
 		listeners = new CopyOnWriteArrayList<>();
 	}
 
 	// -- Helper methods --
-
-	private MultiPrintStream multiPrintStream(final PrintStream ps) {
-		if (ps instanceof MultiPrintStream) return (MultiPrintStream) ps;
-		return new MultiPrintStream(ps);
-	}
 
 	/**
 	 * Gets whether two lists have exactly the same elements in them.
