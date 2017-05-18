@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.BiFunction;
 
 import org.scijava.Context;
 import org.scijava.console.OutputEvent.Source;
@@ -129,6 +130,28 @@ public class DefaultConsoleService extends
 			l.outputOccurred(event);
 	}
 
+	@Override
+	public PrintStream logStream(Source source) {
+		OutputStream a = getBypassingStream(source);
+		OutputStream b = new OutputStreamReporter((relevance, text) -> {
+			final Context context = getContext();
+			boolean contextual = true;
+			boolean containsLog = true;
+			return new OutputEvent(context, source, text, contextual, containsLog);
+		});
+		return new PrintStream(new MultiOutputStream(a, b));
+	}
+
+	private OutputStream getBypassingStream(Source source) {
+		switch (source) {
+			case STDOUT:
+				return ListenableSystemStreams.out().bypass();
+			case STDERR:
+				return ListenableSystemStreams.err().bypass();
+		}
+		throw new AssertionError();
+	}
+
 	// -- Disposable methods --
 
 	@Override
@@ -143,12 +166,20 @@ public class DefaultConsoleService extends
 	private synchronized void initListeners() {
 		if (listeners != null) return; // already initialized
 
-		out = new OutputStreamReporter(Source.STDOUT);
+		out = setupDefaultReporter(Source.STDOUT);
 		ListenableSystemStreams.out().addListener(out);
-		err = new OutputStreamReporter(Source.STDERR);
+		err = setupDefaultReporter(Source.STDERR);
 		ListenableSystemStreams.err().addListener(err);
 
 		listeners = new CopyOnWriteArrayList<>();
+	}
+
+	private OutputStreamReporter setupDefaultReporter(Source source) {
+		return new OutputStreamReporter((relevance, output) -> {
+			final Context context = getContext();
+			final boolean contextual = relevance == ThreadContext.SAME;
+			return new OutputEvent(context, source, output, contextual, false);
+		});
 	}
 
 	// -- Helper methods --
@@ -179,10 +210,10 @@ public class DefaultConsoleService extends
 	private class OutputStreamReporter extends OutputStream {
 
 		/** Source of the output stream; i.e., {@code stdout} or {@code stderr}. */
-		private final Source source;
+		private final BiFunction<ThreadContext, String, OutputEvent> eventFactory;
 
-		public OutputStreamReporter(final Source source) {
-			this.source = source;
+		public OutputStreamReporter(BiFunction<ThreadContext, String, OutputEvent> eventFactory) {
+			this.eventFactory = eventFactory;
 		}
 
 		// -- OutputStream methods --
@@ -208,12 +239,8 @@ public class DefaultConsoleService extends
 		}
 
 		private void publish(final ThreadContext relevance, final String output) {
-			final Context context = getContext();
-			final boolean contextual = relevance == ThreadContext.SAME;
-			final OutputEvent event =
-				new OutputEvent(context, source, output, contextual);
+			final OutputEvent event = eventFactory.apply(relevance, output);
 			notifyListeners(event);
 		}
 	}
-
 }
