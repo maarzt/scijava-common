@@ -207,6 +207,22 @@ public class ConsoleServiceTest {
 		assertOutputEvent(Source.STDERR, c2InvokeErr, true, events2.get(5));
 	}
 
+	@Test
+	public void testLogToStream() {
+		final ArrayList<OutputEvent> events = new ArrayList<>();
+		final OutputListener outputListener = new OutputTracker(events);
+
+		consoleService.addOutputListener(outputListener);
+		consoleService.logStream(Source.STDOUT).print("Hello");
+		System.out.print("World");
+		consoleService.removeOutputListener(outputListener);
+
+		assertEquals(2, events.size());
+		assertTrue(events.get(0).containsLog());
+		assertTrue(events.get(0).isContextual());
+		assertFalse(events.get(1).containsLog());
+	}
+
 	// -- Helper methods --
 
 	private void assertOutputEvent(final Source source, final String output,
