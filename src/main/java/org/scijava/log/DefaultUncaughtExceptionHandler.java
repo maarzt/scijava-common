@@ -68,10 +68,6 @@ public class DefaultUncaughtExceptionHandler implements
 		final UncaughtExceptionHandler handler =
 			new DefaultUncaughtExceptionHandler(log);
 		Thread.setDefaultUncaughtExceptionHandler(handler);
-
-		// Needed for modal dialog handling before Java7:
-		System.setProperty("sun.awt.exception.handler",
-			DefaultUncaughtExceptionHandler.class.getName());
 	}
 
 }
