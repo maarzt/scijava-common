@@ -43,7 +43,7 @@ import java.util.function.Predicate;
  * @author Matthias Arzt
  */
 
-class TestLogListener implements LogListener {
+public class TestLogListener implements LogListener {
 
 	List<LogMessage> messages = new ArrayList<>();
 

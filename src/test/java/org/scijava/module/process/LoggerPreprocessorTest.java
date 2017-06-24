@@ -29,47 +29,53 @@
  * #L%
  */
 
-package org.scijava.log;
+package org.scijava.module.process;
 
-import org.scijava.Priority;
-import org.scijava.module.Module;
-import org.scijava.module.ModuleItem;
-import org.scijava.module.ModuleService;
-import org.scijava.module.process.AbstractPreprocessorPlugin;
-import org.scijava.module.process.PreprocessorPlugin;
+import static org.junit.Assert.assertTrue;
+
+import java.util.concurrent.ExecutionException;
+
+import org.junit.Test;
+import org.scijava.Context;
+import org.scijava.command.Command;
+import org.scijava.command.CommandModule;
+import org.scijava.command.CommandService;
+import org.scijava.log.LogService;
+import org.scijava.log.Logger;
+import org.scijava.log.TestLogListener;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
 /**
- * This {@link PreprocessorPlugin} affects {@link Module}s with a single
- * {@link Parameter} of type {@link Logger}. It will assign a Logger to that
- * Parameter, that is named like the modules class.
+ * Tests {@link LoggerPreprocessor}.
  *
  * @author Matthias Arzt
  */
-@Plugin(type = PreprocessorPlugin.class, priority = Priority.NORMAL_PRIORITY)
-public class LoggerPreprocessor extends AbstractPreprocessorPlugin {
+public class LoggerPreprocessorTest {
 
-	@Parameter(required = false)
-	private LogService logService;
+	@Test
+	public void testInjection() throws InterruptedException, ExecutionException {
+		final Context context = new Context(CommandService.class);
+		final CommandService commandService = context.service(CommandService.class);
+		final LogService logService = context.service(LogService.class);
+		final TestLogListener listener = new TestLogListener();
+		logService.addListener(listener);
 
-	@Parameter(required = false)
-	private ModuleService moduleService;
+		final CommandModule module = //
+				commandService.run(CommandWithLogger.class, true).get();
+		assertTrue(listener.hasLogged(m -> m.source().path().contains(CommandWithLogger.class.getSimpleName())));
+	}
 
-	// -- ModuleProcessor methods --
+	@Plugin(type = Command.class)
+	public static class CommandWithLogger implements Command {
 
-	@Override
-	public void process(final Module module) {
-		if (logService == null || moduleService == null) return;
+		@Parameter
+		public Logger log;
 
-		final ModuleItem<?> loggerInput = moduleService.getSingleInput(module,
-			Logger.class);
-		if (loggerInput == null || !loggerInput.isAutoFill()) return;
-
-		final String name = loggerInput.getName();
-		module.setInput(name, logService.subLogger(module.getDelegateObject()
-			.getClass().getSimpleName()));
-		module.resolveInput(name);
+		@Override
+		public void run() {
+			log.info("log from the command.");
+		}
 	}
 
 }
