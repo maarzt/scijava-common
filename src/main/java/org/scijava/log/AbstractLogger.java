@@ -40,7 +40,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author Matthias Arzt
  */
 @IgnoreAsCallingClass
-class DefaultLogger implements Logger, LogListener {
+public abstract class AbstractLogger implements Logger, LogListener {
 
 	private final LogListener destination;
 
@@ -50,7 +50,7 @@ class DefaultLogger implements Logger, LogListener {
 
 	private final List<LogListener> listeners = new CopyOnWriteArrayList<>();
 
-	public DefaultLogger(final LogListener destination,
+	public AbstractLogger(final LogListener destination,
 		final LogSource source, final int level)
 	{
 		this.destination = destination;
@@ -86,9 +86,7 @@ class DefaultLogger implements Logger, LogListener {
 	}
 
 	@Override
-	public Logger subLogger(final String name, final int level) {
-		return new DefaultLogger(this, source.subSource(name), level);
-	}
+	public abstract Logger subLogger(final String name, final int level);
 
 	// -- LogListener methods --
 

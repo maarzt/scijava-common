@@ -43,14 +43,26 @@ import static org.junit.Assert.assertTrue;
 /**
  * @author Matthias Arzt
  */
-public class DefaultLoggerTest {
+public class AbstractLoggerTest {
 
 	private Logger logger;
 	private TestLogListener listener;
 
+	public static class TestLogger extends AbstractLogger {
+
+		public TestLogger(LogListener destination, LogSource source, int level) {
+			super(destination, source, level);
+		}
+
+		@Override
+		public Logger subLogger(String name, int level) {
+			return new TestLogger(this, getSource().subSource(name), level);
+		}
+	}
+
 	@Before
 	public void setup() {
-		logger = new DefaultLogger(message -> {}, "", LogLevel.INFO);
+		logger = new TestLogger(message -> { }, LogSource.root(), LogLevel.INFO);
 		listener = new TestLogListener();
 		logger.addListener(listener);
 	}

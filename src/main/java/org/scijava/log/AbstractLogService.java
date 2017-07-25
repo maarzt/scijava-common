@@ -112,8 +112,8 @@ public abstract class AbstractLogService extends AbstractService implements
 	// -- Helper classes --
 
 	@IgnoreAsCallingClass
-	private class RootLogger extends DefaultLogger
-	{
+	private class RootLogger extends DefaultLogger {
+
 		public RootLogger() {
 			super(AbstractLogService.this::messageLogged, LogSource.root(), LogLevel.NONE);
 		}
@@ -121,6 +121,22 @@ public abstract class AbstractLogService extends AbstractService implements
 		@Override
 		public int getLevel() {
 			return logLevelStrategy.getLevel();
+		}
+	}
+
+	@IgnoreAsCallingClass
+	private class DefaultLogger extends AbstractLogger {
+
+		public DefaultLogger(LogListener destination, LogSource source,
+			 int level)
+		{
+			super(destination, source, level);
+		}
+
+		@Override
+		public Logger subLogger(String name, int level) {
+			LogSource source = getSource().subSource(name);
+			return new DefaultLogger(this, source, level);
 		}
 	}
 }
