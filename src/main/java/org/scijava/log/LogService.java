@@ -39,13 +39,14 @@ import java.util.function.Function;
 /**
  * Interface for the logging service.
  * <p>
- * The service supports five common logging levels: {@link #ERROR},
- * {@link #WARN}, {@link #INFO}, {@link #TRACE} and {@link #DEBUG}. It provides
- * methods for logging messages, exception stack traces and combinations of the
- * two.
+ * The service supports five common logging levels—{@link #ERROR},
+ * {@link #WARN}, {@link #INFO}, {@link #TRACE} and {@link #DEBUG}—and is
+ * extensible to additional levels as needed. It provides methods for logging
+ * messages, exception stack traces and combinations of the two.
  * </p>
  * 
  * @author Curtis Rueden
+ * @author Matthias Arzt
  */
 public interface LogService extends SciJavaService, Logger {
 
@@ -54,7 +55,7 @@ public interface LogService extends SciJavaService, Logger {
 
 	String LOG_LEVEL_BY_SOURCE_PROPERTY = "scijava.log.level.source";
 
-	/** Changes the log level of the root logger */
+	/** Changes the log level of the root logger. */
 	void setLevel(int level);
 
 	/**
@@ -71,13 +72,13 @@ public interface LogService extends SciJavaService, Logger {
 
 	/**
 	 * Setting the log level for loggers depending on their {@link LogSource}.
-	 * This will only effect loggers that are created after is method has been
+	 * This will only affect loggers that are created after this method has been
 	 * called.
 	 */
 	void setLevelForLogger(LogSource source, int level);
 
 	/**
-	 * If the a LogService writes the log messages to streams,
+	 * If the LogService writes the log messages to streams,
 	 * it should implement this method for setting the output streams.
 	 */
 	default void setPrintStreams(Function<Integer, PrintStream> levelToStream) {}
