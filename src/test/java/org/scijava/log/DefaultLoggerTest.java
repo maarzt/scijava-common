@@ -47,7 +47,7 @@ public class DefaultLoggerTest {
 
 	@Before
 	public void setup() {
-		logger = new DefaultLogger(LogLevel.INFO);
+		logger = new DefaultLogger(message -> {}, "", LogLevel.INFO);
 		listener = new TestLogListener();
 		logger.addListener(listener);
 	}
@@ -60,5 +60,31 @@ public class DefaultLoggerTest {
 
 		assertTrue(listener.hasLogged(m -> m.text().equals("Hello World!")));
 		assertTrue(listener.hasLogged(m -> m.level() == LogLevel.ERROR));
+	}
+
+	@Test
+	public void testSubLogger() {
+		listener.clear();
+		Logger sub = logger.subLogger("sub");
+
+		sub.error("Hello World!");
+
+		assertTrue(listener.hasLogged(m -> m.text().equals("Hello World!")));
+	}
+
+	@Test
+	public void testLogForwarding() {
+		listener.clear();
+		Logger sub = logger.subLogger("xyz");
+		TestLogListener subListener = new TestLogListener();
+		sub.addListener(subListener);
+
+		sub.error("Hello World!");
+		logger.error("Goodbye!");
+
+		assertTrue(subListener.hasLogged(m -> m.text().equals("Hello World!")));
+		assertFalse(subListener.hasLogged(m -> m.text().equals("Goodbye!")));
+		assertTrue(listener.hasLogged(m -> m.text().equals("Hello World!")));
+		assertTrue(listener.hasLogged(m -> m.text().equals("Goodbye!")));
 	}
 }
