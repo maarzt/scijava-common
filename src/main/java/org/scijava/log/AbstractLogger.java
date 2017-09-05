@@ -35,9 +35,10 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
- * Default implementation for {@link Logger}.
+ * Default implementation of {@link Logger}.
  *
  * @author Matthias Arzt
+ * @author Curtis Rueden
  */
 @IgnoreAsCallingClass
 public abstract class AbstractLogger implements Logger, LogListener {
@@ -76,6 +77,11 @@ public abstract class AbstractLogger implements Logger, LogListener {
 	}
 
 	@Override
+	public abstract Logger subLogger(final String name, final int level);
+
+	// -- Listenable methods --
+
+	@Override
 	public void addListener(final LogListener listener) {
 		listeners.add(listener);
 	}
@@ -86,7 +92,9 @@ public abstract class AbstractLogger implements Logger, LogListener {
 	}
 
 	@Override
-	public abstract Logger subLogger(final String name, final int level);
+	public void notifyListeners(final LogMessage message) {
+		messageLogged(message);
+	}
 
 	// -- LogListener methods --
 
